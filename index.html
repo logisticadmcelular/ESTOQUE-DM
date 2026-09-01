@@ -101,6 +101,7 @@
     .cadastro-progresso { flex:0 0 auto; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; border-radius:999px; padding:7px 10px; font-size:12px; font-weight:900; }
     .cadastro-pergunta { display:flex; gap:11px; margin:13px 0; padding:13px; border:1px solid #e5e7eb; border-radius:14px; background:#fafafa; transition:.15s ease; }
     .cadastro-pergunta:focus-within { border-color:#93c5fd; background:#f8fbff; box-shadow:0 2px 8px rgba(37,99,235,.08); }
+    .pergunta-numero { width:30px; height:30px; min-width:30px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; }
     .pergunta-conteudo { flex:1; min-width:0; }
     .pergunta-conteudo .radio-title { margin-top:4px; font-size:16px; }
     .add-opcao { display:grid; grid-template-columns:1fr auto; gap:7px; margin-top:9px; }
@@ -459,7 +460,7 @@
       </div>
 
       <div class="cadastro-pergunta">
-        
+        <div class="pergunta-numero">1</div>
         <div class="pergunta-conteudo">
           <div class="radio-title">Qual é o tipo da peça?</div>
           <div id="espTipoGrupo" class="radio-group"></div>
@@ -471,7 +472,7 @@
       </div>
 
       <div class="cadastro-pergunta">
-        
+        <div class="pergunta-numero">2</div>
         <div class="pergunta-conteudo">
           <div class="radio-title">Qual é a marca do aparelho?</div>
           <div id="espMarcaAparelhoGrupo" class="radio-group"></div>
@@ -483,7 +484,7 @@
       </div>
 
       <div class="cadastro-pergunta">
-        
+        <div class="pergunta-numero">3</div>
         <div class="pergunta-conteudo">
           <div class="radio-title">Qual é o modelo do aparelho?</div>
           <input id="espModelo" placeholder="Ex.: A03" oninput="atualizarDescricaoEspecial()" autocomplete="off">
@@ -491,7 +492,7 @@
       </div>
 
       <div class="cadastro-pergunta">
-        
+        <div class="pergunta-numero">4</div>
         <div class="pergunta-conteudo">
           <div class="radio-title">Tem aro?</div>
           <div id="espAroGrupo" class="radio-group">
@@ -502,7 +503,7 @@
       </div>
 
       <div class="cadastro-pergunta">
-        
+        <div class="pergunta-numero">5</div>
         <div class="pergunta-conteudo">
           <div class="radio-title">Qual é a marca da peça?</div>
           <div id="espMarcaPecaGrupo" class="radio-group"></div>
@@ -1849,10 +1850,43 @@ const ESPECIAL_DEFAULTS = {
   marcaAparelho: ["SAM","MOT","iP","XIA","LG","REA"],
   marcaPeca: ["XP","KIM","CH VIBE","VIBE","TP"]
 };
-function opcoesEspeciais() {
-  try { return JSON.parse(localStorage.getItem("estoqueDM_opcoes_especiais") || "{}"); } catch { return {}; }
+// Remove somente opções antigas indesejadas, preservando todas as outras
+// opções personalizadas que já foram cadastradas neste navegador.
+const ESPECIAL_OPCOES_REMOVER = new Set(["FRONT", "."]);
+
+function limparOpcoesEspeciaisAntigas(opcoes) {
+  const resultado = { ...opcoes };
+
+  ["tipo", "marcaAparelho", "marcaPeca"].forEach(campo => {
+    if (Array.isArray(resultado[campo])) {
+      resultado[campo] = resultado[campo].filter(valor => {
+        const normalizado = String(valor ?? "").trim().toUpperCase();
+        return !ESPECIAL_OPCOES_REMOVER.has(normalizado);
+      });
+    }
+  });
+
+  return resultado;
 }
-function salvarOpcoesEspeciais(o) { localStorage.setItem("estoqueDM_opcoes_especiais", JSON.stringify(o)); }
+
+function opcoesEspeciais() {
+  try {
+    const salvas = JSON.parse(localStorage.getItem("estoqueDM_opcoes_especiais") || "{}");
+    const limpas = limparOpcoesEspeciaisAntigas(salvas);
+
+    // Persiste a limpeza automaticamente. As demais opções permanecem.
+    localStorage.setItem("estoqueDM_opcoes_especiais", JSON.stringify(limpas));
+
+    return limpas;
+  } catch {
+    return {};
+  }
+}
+
+function salvarOpcoesEspeciais(o) {
+  const limpas = limparOpcoesEspeciaisAntigas(o);
+  localStorage.setItem("estoqueDM_opcoes_especiais", JSON.stringify(limpas));
+}
 function valorRadioEspecial(name) { return document.querySelector(`input[name="${name}"]:checked`)?.value || ""; }
 function selecionarRadioEspecial(name, value) {
   document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.checked = r.value === value);
