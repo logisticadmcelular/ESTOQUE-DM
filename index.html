@@ -94,6 +94,35 @@
     .radio-option { display: inline-flex; align-items: center; gap: 6px; width: auto; margin: 0; padding: 8px 11px; border: 1px solid #d1d5db; border-radius: 999px; background: #f9fafb; cursor: pointer; font-weight: 700; }
     .radio-option input { width: auto; margin: 0; padding: 0; accent-color: #2563eb; }
     .radio-option:has(input:checked) { background: #dbeafe; border-color: #2563eb; color: #1e40af; }
+
+    .cadastro-especial { border: 2px solid #dbeafe; }
+    .cadastro-topo, .cadastro-dados-titulo { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .cadastro-topo h2, .cadastro-dados-titulo h2 { margin-bottom:4px; }
+    .cadastro-progresso { flex:0 0 auto; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; border-radius:999px; padding:7px 10px; font-size:12px; font-weight:900; }
+    .cadastro-pergunta { display:flex; gap:11px; margin:13px 0; padding:13px; border:1px solid #e5e7eb; border-radius:14px; background:#fafafa; transition:.15s ease; }
+    .cadastro-pergunta:focus-within { border-color:#93c5fd; background:#f8fbff; box-shadow:0 2px 8px rgba(37,99,235,.08); }
+    .pergunta-numero { width:30px; height:30px; min-width:30px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; }
+    .pergunta-conteudo { flex:1; min-width:0; }
+    .pergunta-conteudo .radio-title { margin-top:4px; font-size:16px; }
+    .add-opcao { display:grid; grid-template-columns:1fr auto; gap:7px; margin-top:9px; }
+    .add-opcao input { margin:0; }
+    .add-opcao button { width:auto; min-width:105px; margin:0; white-space:nowrap; }
+    .descricao-gerada { margin-top:14px; padding:14px; border-radius:14px; background:#eff6ff; border:1px solid #bfdbfe; display:flex; flex-direction:column; gap:5px; }
+    .descricao-label { font-size:11px; font-weight:900; color:#1d4ed8; letter-spacing:.5px; }
+    #espDescricaoPreview { font-size:18px; line-height:1.25; word-break:break-word; }
+    .btn-usar-descricao { margin-top:9px; }
+    .cadastro-dados { border-top:4px solid #2563eb; }
+    .campo-cadastro { margin:9px 0; }
+    .campo-cadastro label { display:block; font-weight:800; font-size:13px; margin:0 0 3px; color:#374151; }
+    .campo-cadastro input { margin:0; }
+    .codigo-linha { display:grid; grid-template-columns:1fr 150px; gap:8px; }
+    .codigo-linha button { margin:0; white-space:nowrap; }
+    .campo-ajuda { display:block; margin-top:4px; font-size:11px; color:#6b7280; }
+    .cadastro-valores { align-items:start; }
+    .moeda-input { display:flex; align-items:center; border:1px solid #d1d5db; border-radius:9px; background:#fff; overflow:hidden; }
+    .moeda-input span { padding-left:12px; color:#6b7280; font-weight:800; }
+    .moeda-input input { border:0 !important; border-radius:0 !important; outline:none; flex:1; min-width:0; }
+    .btn-cadastrar-final { margin-top:12px; font-size:16px; padding:14px; }
     .especial-add { margin-top: 7px; }
     .hidden { display: none !important; }
     .small { font-size: 13px; color: #6b7280; }
@@ -421,62 +450,112 @@
   </section>
 
   <section id="cadastrar" class="hidden">
-    <div class="card">
-      <h2>Cadastrar peça</h2>
-      <div class="grid"><input id="cadCodigo" placeholder="Código da peça com 5 dígitos"><button onclick="gerarCodigo()">Gerar código</button></div>
-      <input id="cadPeca" placeholder="Nome da peça">
-      <div class="grid"><input id="cadQtd" type="number" min="0" placeholder="Quantidade"><input id="cadValor" type="number" min="0" step="0.01" placeholder="Valor da peça R$"></div>
-      <button onclick="cadastrarPeca()">Salvar peça</button>
+    <div class="card cadastro-especial dev-only">
+      <div class="cadastro-topo">
+        <div>
+          <h2>🧩 Monte a peça</h2>
+          <p class="small">Responda às perguntas. A descrição é montada automaticamente.</p>
+        </div>
+        <span id="cadastroProgresso" class="cadastro-progresso">0/5</span>
+      </div>
+
+      <div class="cadastro-pergunta">
+        <div class="pergunta-numero">1</div>
+        <div class="pergunta-conteudo">
+          <div class="radio-title">Qual é o tipo da peça?</div>
+          <div id="espTipoGrupo" class="radio-group"></div>
+          <div class="add-opcao">
+            <input id="espNovaTipo" placeholder="Outro tipo de peça">
+            <button type="button" onclick="adicionarOpcaoEspecial('tipo')">+ Adicionar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cadastro-pergunta">
+        <div class="pergunta-numero">2</div>
+        <div class="pergunta-conteudo">
+          <div class="radio-title">Qual é a marca do aparelho?</div>
+          <div id="espMarcaAparelhoGrupo" class="radio-group"></div>
+          <div class="add-opcao">
+            <input id="espNovaMarcaAparelho" placeholder="Outra marca (abreviação)">
+            <button type="button" onclick="adicionarOpcaoEspecial('marcaAparelho')">+ Adicionar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cadastro-pergunta">
+        <div class="pergunta-numero">3</div>
+        <div class="pergunta-conteudo">
+          <div class="radio-title">Qual é o modelo do aparelho?</div>
+          <input id="espModelo" placeholder="Ex.: A03" oninput="atualizarDescricaoEspecial()" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="cadastro-pergunta">
+        <div class="pergunta-numero">4</div>
+        <div class="pergunta-conteudo">
+          <div class="radio-title">Tem aro?</div>
+          <div id="espAroGrupo" class="radio-group">
+            <label class="radio-option"><input type="radio" name="espAro" value="S/A" onchange="atualizarDescricaoEspecial()"> S/A</label>
+            <label class="radio-option"><input type="radio" name="espAro" value="C/A" onchange="atualizarDescricaoEspecial()"> C/A</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="cadastro-pergunta">
+        <div class="pergunta-numero">5</div>
+        <div class="pergunta-conteudo">
+          <div class="radio-title">Qual é a marca da peça?</div>
+          <div id="espMarcaPecaGrupo" class="radio-group"></div>
+          <div class="add-opcao">
+            <input id="espNovaMarcaPeca" placeholder="Outra marca da peça">
+            <button type="button" onclick="adicionarOpcaoEspecial('marcaPeca')">+ Adicionar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="descricao-gerada">
+        <span class="descricao-label">DESCRIÇÃO GERADA</span>
+        <strong id="espDescricaoPreview">Selecione as opções acima.</strong>
+      </div>
+      <button type="button" class="btn-green btn-usar-descricao" onclick="usarDescricaoEspecial()">✓ Usar esta descrição</button>
     </div>
 
-    <div class="card dev-only">
-      <h2>Cadastro especial de peças</h2>
-      <p class="small">Esta área aparece somente quando o usuário estiver logado como desenvolvedor. Escolha as opções pelas bolinhas para montar a descrição automaticamente.</p>
-
-      <div class="radio-section">
-        <div class="radio-title">Tipo de peça</div>
-        <div id="espTipoGrupo" class="radio-group"></div>
-        <div class="grid especial-add">
-          <input id="espNovaTipo" placeholder="Outro tipo de peça">
-          <button type="button" onclick="adicionarOpcaoEspecial('tipo')">+ Adicionar tipo</button>
+    <div class="card cadastro-dados">
+      <div class="cadastro-dados-titulo">
+        <div>
+          <h2>📦 Dados para cadastrar</h2>
+          <p class="small">Agora informe o código, a quantidade inicial e o valor da peça.</p>
         </div>
       </div>
 
-      <div class="radio-section">
-        <div class="radio-title">Marca do aparelho</div>
-        <div id="espMarcaAparelhoGrupo" class="radio-group"></div>
-        <div class="grid especial-add">
-          <input id="espNovaMarcaAparelho" placeholder="Outra marca (abreviação)">
-          <button type="button" onclick="adicionarOpcaoEspecial('marcaAparelho')">+ Adicionar marca</button>
+      <div class="campo-cadastro">
+        <label for="cadPeca">Nome / descrição da peça</label>
+        <input id="cadPeca" placeholder="Ex.: FRONTAL SAM A03 S/A XP" autocomplete="off">
+      </div>
+
+      <div class="campo-cadastro">
+        <label for="cadCodigo">Código da peça</label>
+        <div class="codigo-linha">
+          <input id="cadCodigo" inputmode="numeric" maxlength="5" placeholder="00000" autocomplete="off">
+          <button type="button" onclick="gerarCodigo()">🎲 Gerar código</button>
+        </div>
+        <span class="campo-ajuda">O código deve ter exatamente 5 dígitos.</span>
+      </div>
+
+      <div class="grid cadastro-valores">
+        <div class="campo-cadastro">
+          <label for="cadQtd">Quantidade inicial</label>
+          <input id="cadQtd" type="number" min="0" step="1" inputmode="numeric" placeholder="Ex.: 10">
+        </div>
+        <div class="campo-cadastro">
+          <label for="cadValor">Valor da peça</label>
+          <div class="moeda-input"><span>R$</span><input id="cadValor" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off" oninput="formatarMoedaCampo(this)"></div>
         </div>
       </div>
 
-      <div class="radio-section">
-        <div class="radio-title">Modelo do aparelho</div>
-        <input id="espModelo" placeholder="Ex.: A03" oninput="atualizarDescricaoEspecial()">
-      </div>
-
-      <div class="radio-section">
-        <div class="radio-title">Aro</div>
-        <div id="espAroGrupo" class="radio-group">
-          <label class="radio-option"><input type="radio" name="espAro" value="S/A" onchange="atualizarDescricaoEspecial()"> S/A</label>
-          <label class="radio-option"><input type="radio" name="espAro" value="C/A" onchange="atualizarDescricaoEspecial()"> C/A</label>
-        </div>
-      </div>
-
-      <div class="radio-section">
-        <div class="radio-title">Marca da peça</div>
-        <div id="espMarcaPecaGrupo" class="radio-group"></div>
-        <div class="grid especial-add">
-          <input id="espNovaMarcaPeca" placeholder="Outra marca da peça">
-          <button type="button" onclick="adicionarOpcaoEspecial('marcaPeca')">+ Adicionar marca</button>
-        </div>
-      </div>
-
-      <div class="sale-card"><strong>Descrição gerada:</strong><br><span id="espDescricaoPreview">Selecione os campos acima.</span></div>
-      <button type="button" class="btn-green" onclick="usarDescricaoEspecial()">Usar descrição no cadastro</button>
+      <button class="btn-green btn-cadastrar-final" onclick="cadastrarPeca()">✓ Cadastrar peça</button>
     </div>
-
   </section>
 
   <section id="baixar" class="hidden">
@@ -845,6 +924,27 @@ function exigirDev() {
 const titulos = {dashboard:"Início",cadastrar:"Cadastrar peça",baixar:"Baixar peça / venda",garantia:"Novo pedido de garantia",situacoesGarantia:"Situações da garantia",repor:"Repor estoque",etiquetas:"Etiquetas",ver:"Ver estoque",relatoriosCompra:"Relatórios para compra",movimentacoes:"Movimentações completas",pecasUsadas:"Peças usadas",desenvolvedor:"Desenvolvedor"};
 
 function dinheiro(v) { return Number(v||0).toLocaleString("pt-BR", {style:"currency", currency:"BRL"}); }
+function valorMoedaInput(v) {
+  const digits = String(v ?? "").replace(/\D/g, "");
+  if (!digits) return "";
+  return (Number(digits) / 100).toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function formatarMoedaCampo(input) {
+  if (!input) return;
+  const pos = input.selectionStart;
+  const antes = input.value;
+  input.value = valorMoedaInput(antes);
+  if (document.activeElement === input) {
+    const delta = input.value.length - antes.length;
+    try { input.setSelectionRange(Math.max(0, (pos || input.value.length) + delta), Math.max(0, (pos || input.value.length) + delta)); } catch {}
+  }
+}
+function lerMoedaCampo(input) {
+  const texto = String(input?.value || "").trim();
+  if (!texto) return NaN;
+  const digits = texto.replace(/\D/g, "");
+  return digits ? Number(digits) / 100 : NaN;
+}
 function gerarId() { return Date.now().toString(36)+Math.random().toString(36).substring(2,8).toUpperCase(); }
 function abrirMenu() { document.getElementById("drawerBg").style.display="block"; }
 function fecharMenu(e) { if(!e || e.target.id==="drawerBg" || e.target.tagName==="BUTTON") document.getElementById("drawerBg").style.display="none"; }
@@ -890,6 +990,13 @@ function atualizarTelaAtual() {
   if(tela==="relatoriosCompra") renderizarRelatoriosCompra();
   if(tela==="movimentacoes") renderizarHistorico();
   if(tela==="pecasUsadas") renderizarPecasUsadas();
+  if(tela==="cadastrar") {
+    if (usuarioAtual?.dev) {
+      carregarOpcoesEspeciais();
+      atualizarDescricaoEspecial();
+      atualizarProgressoCadastro();
+    }
+  }
   if(tela==="desenvolvedor") { carregarUsuariosDev(); renderizarProdutosDev(); carregarOpcoesEspeciais(); atualizarDescricaoEspecial(); }
 }
 
@@ -951,7 +1058,7 @@ async function cadastrarPeca() {
   const codigo = document.getElementById("cadCodigo").value.trim();
   const peca = document.getElementById("cadPeca").value.trim().toUpperCase();
   const qtd = Number(document.getElementById("cadQtd").value);
-  const valor = Number(document.getElementById("cadValor").value);
+  const valor = lerMoedaCampo(document.getElementById("cadValor"));
   if(!/^\\d{5}$/.test(codigo) || !peca || qtd<0 || Number.isNaN(qtd) || valor<0 || Number.isNaN(valor)) return alert("O código deve ter exatamente 5 dígitos e os demais campos devem estar preenchidos corretamente.");
   const existente = estoque.find(p=>p.codigo===codigo);
   const situacao = qtd>0 ? "ESTOQUE OK" : "ESTOQUE ZERADO";
@@ -1772,9 +1879,9 @@ function carregarOpcoesEspeciais() {
   const atualTipo = valorRadioEspecial("espTipo");
   const atualAparelho = valorRadioEspecial("espMarcaAparelho");
   const atualPeca = valorRadioEspecial("espMarcaPeca");
-  preencherRadiosEspecial("espTipoGrupo", "espTipo", tipo, atualTipo || tipo[0]);
-  preencherRadiosEspecial("espMarcaAparelhoGrupo", "espMarcaAparelho", marcaAparelho, atualAparelho || marcaAparelho[0]);
-  preencherRadiosEspecial("espMarcaPecaGrupo", "espMarcaPeca", marcaPeca, atualPeca || marcaPeca[0]);
+  preencherRadiosEspecial("espTipoGrupo", "espTipo", tipo, atualTipo);
+  preencherRadiosEspecial("espMarcaAparelhoGrupo", "espMarcaAparelho", marcaAparelho, atualAparelho);
+  preencherRadiosEspecial("espMarcaPecaGrupo", "espMarcaPeca", marcaPeca, atualPeca);
   atualizarDescricaoEspecial();
 }
 function atualizarDescricaoEspecial() {
@@ -1788,7 +1895,20 @@ function atualizarDescricaoEspecial() {
   const desc = partes.join(" ");
   const el = document.getElementById("espDescricaoPreview");
   if (el) el.innerText = desc || "Selecione os campos acima.";
+  atualizarProgressoCadastro();
   return desc;
+}
+function atualizarProgressoCadastro() {
+  const el = document.getElementById("cadastroProgresso");
+  if (!el) return;
+  const respondidas = [
+    valorRadioEspecial("espTipo"),
+    valorRadioEspecial("espMarcaAparelho"),
+    document.getElementById("espModelo")?.value.trim(),
+    valorRadioEspecial("espAro"),
+    valorRadioEspecial("espMarcaPeca")
+  ].filter(Boolean).length;
+  el.textContent = respondidas + "/5";
 }
 function adicionarOpcaoEspecial(campo) {
   const ids = { tipo:"espNovaTipo", marcaAparelho:"espNovaMarcaAparelho", marcaPeca:"espNovaMarcaPeca" };
@@ -1809,6 +1929,8 @@ function usarDescricaoEspecial() {
   const desc = atualizarDescricaoEspecial();
   if (!desc) return alert("Monte a descrição primeiro.");
   document.getElementById("cadPeca").value = desc;
+  const dados = document.querySelector(".cadastro-dados");
+  if (dados) dados.scrollIntoView({ behavior: "smooth", block: "start" });
   aviso("Descrição preenchida no cadastro");
 }
 
