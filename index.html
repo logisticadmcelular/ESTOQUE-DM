@@ -321,6 +321,28 @@
       td::before { content: attr(data-label); font-weight:bold; display:block; color:#374151; }
     }
   </style>
+
+<style id="dashboard-interativo-css">
+.dashboard-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.dashboard-card{position:relative;border:1px solid #e5e7eb;border-radius:18px;padding:16px;background:#fff;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;overflow:hidden}
+.dashboard-card:hover,.dashboard-card:active{transform:translateY(-1px);box-shadow:0 7px 20px rgba(15,23,42,.08);border-color:#bfdbfe}
+.dashboard-card .dash-icon{font-size:25px;margin-bottom:9px}
+.dashboard-card .dash-title{font-size:12px;color:#64748b;font-weight:700}
+.dashboard-card .dash-value{font-size:27px;font-weight:850;color:#0f172a;margin-top:3px}
+.dashboard-card .dash-help{font-size:11px;color:#94a3b8;margin-top:5px}
+.dashboard-card .dash-arrow{position:absolute;right:14px;bottom:13px;font-size:18px;color:#94a3b8}
+.dashboard-section-title{font-weight:850;font-size:15px;margin:18px 0 9px}
+.dashboard-detail{margin-top:12px}
+.dashboard-detail.hidden{display:none}
+.dashboard-detail-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.dashboard-detail-head h3{margin:0;font-size:16px}
+.dashboard-close{border:0;background:#f1f5f9;border-radius:10px;padding:7px 10px;cursor:pointer}
+.dashboard-list-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid #edf0f3}
+.dashboard-list-item:last-child{border-bottom:0}
+.dashboard-list-item small{color:#64748b;display:block;margin-top:2px}
+.dashboard-empty{padding:18px;text-align:center;color:#64748b;background:#f8fafc;border-radius:12px}
+@media(max-width:600px){.dashboard-cards{grid-template-columns:1fr 1fr}.dashboard-card{padding:13px}.dashboard-card .dash-value{font-size:24px}}
+</style>
 </head>
 <body>
 
@@ -621,7 +643,9 @@
 <script>
 const SUPABASE_URL = "https://kplgkdancpoavempmroe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_UuAKJ20rkSOUXudkym6fuA_CttWEXY_";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = (window.supabase && typeof window.supabase.createClient === "function")
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
 
 let estoque = [];
 let historico = [];
@@ -655,37 +679,26 @@ let usuarioAtual = null;
 let usuariosSistemaOnline = [];
 
 async function carregarUsuariosSistema() {
-  try {
-    const res = await sb.from("usuarios").select("*").order("nome");
-    if (res.error) throw res.error;
-
-    usuariosSistemaOnline = res.data || [];
-
-    if (usuariosSistemaOnline.length === 0) {
-      usuariosSistemaOnline = Object.entries(USUARIOS_SISTEMA).map(([login, u]) => ({
-        id: login,
-        login,
-        nome: u.nome,
-        senha: u.senha,
-        senha_dev: u.senhaDev || "",
-        dev: !!u.dev,
-        ativo: true
-      }));
-    }
-
-    atualizarSelectLogin();
-  } catch (e) {
-    usuariosSistemaOnline = Object.entries(USUARIOS_SISTEMA).map(([login, u]) => ({
-      id: login,
-      login,
-      nome: u.nome,
-      senha: u.senha,
-      senha_dev: u.senhaDev || "",
-      dev: !!u.dev,
-      ativo: true
+  const fallback = () => {
+    usuariosSistemaOnline = Object.entries(USUARIOS_SISTEMA).map(([login,u]) => ({
+      id: login, login, nome: u.nome, senha: u.senha,
+      senha_dev: u.senhaDev || "", dev: !!u.dev, ativo: true
     }));
     atualizarSelectLogin();
-  }
+  };
+  fallback();
+  if (!sb) return;
+  try {
+    const res = await Promise.race([
+      sb.from("usuarios").select("*").order("nome"),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error("TIMEOUT")),5000))
+    ]);
+    if (res.error) throw res.error;
+    if (res.data && res.data.length) {
+      usuariosSistemaOnline=res.data;
+      atualizarSelectLogin();
+    }
+  } catch(e) { fallback(); }
 }
 
 function atualizarSelectLogin() {
@@ -708,49 +721,38 @@ function atualizarSelectLogin() {
 }
 
 async function iniciarLogin() {
-  await carregarUsuariosSistema();
-
   const salvo = localStorage.getItem("estoqueDM_usuario");
   if (salvo) {
     try {
       usuarioAtual = JSON.parse(salvo);
       aplicarUsuarioLogado();
-      return;
-    } catch (e) {
+    } catch(e) {
       localStorage.removeItem("estoqueDM_usuario");
+      document.getElementById("loginScreen").style.display="flex";
     }
+  } else {
+    document.getElementById("loginScreen").style.display="flex";
   }
-
-  document.getElementById("loginScreen").style.display = "flex";
+  await carregarUsuariosSistema();
 }
 
 function fazerLogin() {
-  const usuario = document.getElementById("loginUsuario").value;
-  const senha = document.getElementById("loginSenha").value;
-  const config = usuariosSistemaOnline.find(u => u.login === usuario && u.ativo !== false);
-
-  if (!config) {
-    alert("Selecione o usuário.");
-    return;
+  const usuario=document.getElementById("loginUsuario").value;
+  const senha=document.getElementById("loginSenha").value;
+  let config=usuariosSistemaOnline.find(u=>u.login===usuario && u.ativo!==false);
+  if(!config) {
+    const local=USUARIOS_SISTEMA[usuario];
+    if(local) config={login:usuario,nome:local.nome,senha:local.senha,
+      senha_dev:local.senhaDev||"",dev:!!local.dev,ativo:true};
   }
-
-  let modoDev = false;
-
-  if (config.dev && config.senha_dev && senha === config.senha_dev) {
-    modoDev = true;
-  } else if (senha !== config.senha) {
-    alert("Senha incorreta.");
-    return;
-  }
-
-  usuarioAtual = {
-    usuario: config.login,
-    nome: config.nome,
-    dev: modoDev
-  };
-
-  localStorage.setItem("estoqueDM_usuario", JSON.stringify(usuarioAtual));
+  if(!config){ alert("Selecione o usuário."); return; }
+  let modoDev=false;
+  if(config.dev && config.senha_dev && senha===config.senha_dev) modoDev=true;
+  else if(senha!==config.senha){ alert("Senha incorreta."); return; }
+  usuarioAtual={usuario:config.login,nome:config.nome,dev:modoDev};
+  localStorage.setItem("estoqueDM_usuario",JSON.stringify(usuarioAtual));
   aplicarUsuarioLogado();
+  if(typeof carregarTudo==="function") carregarTudo().catch(()=>setConexao(false));
 }
 
 function aplicarUsuarioLogado() {
@@ -1031,6 +1033,121 @@ function imprimirTicketGarantiaLimpo(garantia, venda, info) {
     }, 250);
   };
 <\/script>
+
+<script id="dashboard-interativo-js">
+(function(){
+  function qs(id){return document.getElementById(id);}
+  function showSectionById(id){
+    const el=qs(id);
+    if(!el)return false;
+    document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));
+    el.classList.remove("hidden");
+    window.scrollTo({top:0,behavior:"smooth"});
+    return true;
+  }
+  function goMenu(text, fallbackId){
+    // Try existing navigation buttons/links first.
+    const nodes=[...document.querySelectorAll("button,a,[role='button']")];
+    const n=nodes.find(x=>(x.textContent||"").trim().toLowerCase().includes(text.toLowerCase()));
+    if(n){n.click();return true;}
+    return showSectionById(fallbackId);
+  }
+  function todayKey(){
+    const d=new Date();
+    return d.toISOString().slice(0,10);
+  }
+  function usedToday(){
+    const h=Array.isArray(window.historico)?window.historico:[];
+    return h.filter(x=>{
+      const type=String(x.tipo||"").toUpperCase();
+      const action=String(x.acao||"").toUpperCase();
+      const date=String(x.data_iso||x.data||"").slice(0,10);
+      return date===todayKey() && (type==="VENDA" || action.includes("USAR") || action.includes("BAIXA"));
+    });
+  }
+  function countStock(){
+    const p=Array.isArray(window.estoque)?window.estoque:[];
+    return p.reduce((n,x)=>n+Number(x.qtd||0),0);
+  }
+  function zeroStock(){
+    const p=Array.isArray(window.estoque)?window.estoque:[];
+    return p.filter(x=>Number(x.qtd||0)<=0);
+  }
+  function openDetail(title, rows){
+    const box=qs("dashboardDetalhe");
+    if(!box)return;
+    qs("dashboardDetalheTitulo").textContent=title;
+    const list=qs("dashboardDetalheLista");
+    list.innerHTML=rows.length?rows.map(x=>`<div class="dashboard-list-item"><div><strong>${x.title}</strong><small>${x.sub||""}</small></div><strong>${x.value||""}</strong></div>`).join(""):`<div class="dashboard-empty">Nenhum registro encontrado.</div>`;
+    box.classList.remove("hidden");
+    box.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function refresh(){
+    const used=usedToday(), zero=zeroStock(), total=countStock();
+    const a=qs("dashTotalEstoque"); if(a)a.textContent=total;
+    const b=qs("dashZeradas"); if(b)b.textContent=zero.length;
+    const c=qs("dashUsadasHoje"); if(c)c.textContent=used.reduce((n,x)=>n+Number(x.qtdMov||x.quantidade||1),0);
+    const g=qs("dashGarantias"); if(g){
+      const h=Array.isArray(window.garantias)?window.garantias:[];
+      g.textContent=h.filter(x=>!["GARANTIA APROVADA","GARANTIA NEGADA"].includes(String(x.status||"").toUpperCase())).length;
+    }
+  }
+  window.abrirDashboardCard=function(tipo){
+    if(tipo==="estoque"){
+      return goMenu("estoque","estoque");
+    }
+    if(tipo==="zeradas"){
+      const z=zeroStock();
+      openDetail("Peças zeradas",z.map(x=>({title:x.peca||x.nome||"Peça",sub:"Código: "+(x.codigo||"-"),value:"0"})));
+      return;
+    }
+    if(tipo==="usadas"){
+      const u=usedToday();
+      openDetail("Peças usadas hoje",u.map(x=>({title:x.peca||x.nome||"Peça",sub:(x.codigo?"Código: "+x.codigo+" · ":"")+(x.os?"OS: "+x.os:"OS não informada"),value:"-"+(x.qtdMov||x.quantidade||1)})));
+      return;
+    }
+    if(tipo==="garantias"){
+      return goMenu("situações da garantia","situacoesGarantia");
+    }
+  };
+  window.fecharDashboardDetalhe=function(){qs("dashboardDetalhe")?.classList.add("hidden");};
+
+  function build(){
+    // Find a likely dashboard/home section and place cards near its beginning.
+    const sections=[...document.querySelectorAll("section")];
+    let home=sections.find(s=>/in[ií]cio|dashboard|inicial/i.test((s.id||"")+" "+(s.textContent||"").slice(0,300)));
+    if(!home)return;
+    if(qs("dashboardInterativo"))return;
+    const wrap=document.createElement("div");
+    wrap.id="dashboardInterativo";
+    wrap.innerHTML=`
+      <div class="dashboard-section-title">Visão rápida</div>
+      <div class="dashboard-cards">
+        <div class="dashboard-card" onclick="abrirDashboardCard('estoque')"><div class="dash-icon">📦</div><div class="dash-title">ESTOQUE</div><div id="dashTotalEstoque" class="dash-value">0</div><div class="dash-help">Tocar para abrir o estoque</div><div class="dash-arrow">›</div></div>
+        <div class="dashboard-card" onclick="abrirDashboardCard('zeradas')"><div class="dash-icon">⚠️</div><div class="dash-title">ZERADAS</div><div id="dashZeradas" class="dash-value">0</div><div class="dash-help">Tocar para ver as peças</div><div class="dash-arrow">›</div></div>
+        <div class="dashboard-card" onclick="abrirDashboardCard('usadas')"><div class="dash-icon">🛠️</div><div class="dash-title">PEÇAS USADAS HOJE</div><div id="dashUsadasHoje" class="dash-value">0</div><div class="dash-help">Tocar para ver os detalhes</div><div class="dash-arrow">›</div></div>
+        <div class="dashboard-card" onclick="abrirDashboardCard('garantias')"><div class="dash-icon">🛡️</div><div class="dash-title">GARANTIAS</div><div id="dashGarantias" class="dash-value">0</div><div class="dash-help">Tocar para acompanhar</div><div class="dash-arrow">›</div></div>
+      </div>
+      <div id="dashboardDetalhe" class="dashboard-detail hidden card">
+        <div class="dashboard-detail-head"><h3 id="dashboardDetalheTitulo">Detalhes</h3><button class="dashboard-close" onclick="fecharDashboardDetalhe()">Fechar</button></div>
+        <div id="dashboardDetalheLista"></div>
+      </div>`;
+    home.prepend(wrap);
+    refresh();
+  }
+
+  document.addEventListener("DOMContentLoaded",()=>setTimeout(build,250));
+  setInterval(refresh,2500);
+  const oldCarregarTudo=window.carregarTudo;
+  if(typeof oldCarregarTudo==="function"){
+    window.carregarTudo=async function(){
+      const r=await oldCarregarTudo.apply(this,arguments);
+      refresh();
+      return r;
+    };
+  }
+})();
+</script>
 </body>
 </html>`;
 
@@ -1905,8 +2022,7 @@ async function zerarTodoEstoque() {
 
 
 
-iniciarLogin();
-carregarTudo();
+iniciarLogin().catch(()=>{document.getElementById("loginScreen").style.display="flex";});
 </script>
 </body>
 </html>
