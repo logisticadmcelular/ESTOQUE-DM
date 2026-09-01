@@ -78,7 +78,7 @@
     }
     main { padding: 12px; max-width: 1150px; margin: auto; }
     .drawer-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; z-index: 90; }
-    .drawer { background: white; width: 295px; max-width: 85%; height: 100%; padding: 16px; box-shadow: 3px 0 12px rgba(0,0,0,.2); }
+    .drawer { background: white; width: 295px; max-width: 85%; height: 100%; padding: 16px; box-shadow: 3px 0 12px rgba(0,0,0,.2); overflow-y: auto; overscroll-behavior: contain; }
     .drawer h2 { margin: 0 0 14px; color: #2563eb; }
     .drawer button { display: block; width: 100%; margin: 7px 0; padding: 13px; border: 0; border-radius: 10px; background: #e5e7eb; text-align: left; font-weight: bold; color: #111827; }
     .card { background: white; border-radius: 14px; padding: 14px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
@@ -109,9 +109,24 @@
     .total-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
     .total-card { background: white; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
     .total-card strong { display: block; font-size: 20px; color: #2563eb; margin-top: 5px; }
+    .quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .quick-card { min-height: 145px; margin: 0; padding: 14px 10px; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; color: #111827; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .12s ease, box-shadow .12s ease; }
+    .quick-card:active { transform: scale(.98); }
+    .quick-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    .quick-icon { font-size: 28px; line-height: 1; margin-bottom: 7px; }
+    .quick-title { font-size: 12px; font-weight: 900; line-height: 1.15; }
+    .quick-card strong { display: block; font-size: 25px; color: #2563eb; margin: 5px 0 2px; }
+    .quick-card small { color: #6b7280; font-size: 11px; }
+    .used-item { border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; margin: 8px 0; background: #fff; cursor: pointer; }
+    .used-item:active { transform: scale(.995); }
+    .used-summary { font-weight: 900; }
+    .used-details { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #d1d5db; line-height: 1.5; }
+    .filter-note { margin: 4px 0 10px; color: #6b7280; font-size: 12px; }
+    @media (max-width:720px) { .quick-grid { grid-template-columns: repeat(2, 1fr); } .quick-card { min-height: 132px; } }
+
     .sale-card { border: 1px solid #d1d5db; border-radius: 12px; padding: 10px; margin: 8px 0; background: #fff; }
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; padding: 12px; z-index: 99; overflow: auto; }
-    .modal { background: white; border-radius: 14px; padding: 16px; max-width: 480px; width: 100%; }
+    .modal { background: white; border-radius: 14px; padding: 16px; max-width: 480px; width: 100%; max-height: 92vh; overflow-y: auto; }
     .ticket { display:none; background:white; color:black; width:280px; padding:12px; font-size:13px; border:1px dashed #111; }
     .ticket h2 { text-align:center; margin:0 0 8px; font-size:17px; }
     .ticket p { margin:5px 0; }
@@ -321,28 +336,6 @@
       td::before { content: attr(data-label); font-weight:bold; display:block; color:#374151; }
     }
   </style>
-
-<style id="dashboard-interativo-css">
-.dashboard-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
-.dashboard-card{position:relative;border:1px solid #e5e7eb;border-radius:18px;padding:16px;background:#fff;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;overflow:hidden}
-.dashboard-card:hover,.dashboard-card:active{transform:translateY(-1px);box-shadow:0 7px 20px rgba(15,23,42,.08);border-color:#bfdbfe}
-.dashboard-card .dash-icon{font-size:25px;margin-bottom:9px}
-.dashboard-card .dash-title{font-size:12px;color:#64748b;font-weight:700}
-.dashboard-card .dash-value{font-size:27px;font-weight:850;color:#0f172a;margin-top:3px}
-.dashboard-card .dash-help{font-size:11px;color:#94a3b8;margin-top:5px}
-.dashboard-card .dash-arrow{position:absolute;right:14px;bottom:13px;font-size:18px;color:#94a3b8}
-.dashboard-section-title{font-weight:850;font-size:15px;margin:18px 0 9px}
-.dashboard-detail{margin-top:12px}
-.dashboard-detail.hidden{display:none}
-.dashboard-detail-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
-.dashboard-detail-head h3{margin:0;font-size:16px}
-.dashboard-close{border:0;background:#f1f5f9;border-radius:10px;padding:7px 10px;cursor:pointer}
-.dashboard-list-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid #edf0f3}
-.dashboard-list-item:last-child{border-bottom:0}
-.dashboard-list-item small{color:#64748b;display:block;margin-top:2px}
-.dashboard-empty{padding:18px;text-align:center;color:#64748b;background:#f8fafc;border-radius:12px}
-@media(max-width:600px){.dashboard-cards{grid-template-columns:1fr 1fr}.dashboard-card{padding:13px}.dashboard-card .dash-value{font-size:24px}}
-</style>
 </head>
 <body>
 
@@ -381,6 +374,7 @@
     <button onclick="abrirTela('ver')">🔎 Ver estoque</button>
     <button onclick="abrirTela('relatoriosCompra')">🧾 Relatórios para compra</button>
     <button onclick="abrirTela('movimentacoes')">📋 Movimentações completas</button>
+    <button onclick="abrirTela('pecasUsadas')">🛠️ Peças usadas</button>
     <button class="dev-only" onclick="abrirTela('desenvolvedor')">🛠️ Desenvolvedor</button>
     <button class="btn-red" onclick="sairDoSistema()">🚪 Sair</button>
   </nav>
@@ -388,8 +382,37 @@
 
 <main>
   <section id="dashboard">
+    <div class="card">
+      <h2>VISÃO RÁPIDA</h2>
+      <div class="quick-grid">
+        <button class="quick-card" onclick="abrirTela('ver')" type="button">
+          <span class="quick-icon">📦</span>
+          <span class="quick-title">ESTOQUE</span>
+          <strong id="quickEstoque">0</strong>
+          <small>peças disponíveis</small>
+        </button>
+        <button class="quick-card" onclick="abrirEstoqueZerado()" type="button">
+          <span class="quick-icon">⚠️</span>
+          <span class="quick-title">PEÇAS ZERADAS</span>
+          <strong id="quickZeradas">0</strong>
+          <small>sem estoque</small>
+        </button>
+        <button class="quick-card" onclick="abrirTela('pecasUsadas')" type="button">
+          <span class="quick-icon">🛠️</span>
+          <span class="quick-title">PEÇAS USADAS HOJE</span>
+          <strong id="quickUsadasHoje">0</strong>
+          <small>quantidade baixada</small>
+        </button>
+        <button class="quick-card" onclick="abrirTela('situacoesGarantia')" type="button">
+          <span class="quick-icon">🛡️</span>
+          <span class="quick-title">GARANTIAS</span>
+          <strong id="quickGarantias">0</strong>
+          <small>abertas</small>
+        </button>
+      </div>
+    </div>
     <div class="total-box">
-      <div class="total-card">Peças cadastradas <strong id="totalPecas">0</strong></div>
+      <div class="total-card">Tipos de peças <strong id="totalPecas">0</strong></div>
       <div class="total-card">Valor em estoque <strong id="valorEstoque">R$ 0,00</strong></div>
       <div class="total-card">Peças zeradas <strong id="totalZeradas">0</strong></div>
       <div class="total-card">Garantias abertas <strong id="totalGarantias">0</strong></div>
@@ -565,6 +588,28 @@
     <div class="card"><h2 id="tituloTabelaRelatorio">Resultado</h2><table><thead><tr><th>Código</th><th>Peça</th><th>QTD usada</th><th>Estoque atual</th><th>Valor un.</th><th>Total</th><th>Situação</th></tr></thead><tbody id="tabelaRelatorioCompra"></tbody></table></div>
   </section>
 
+  <section id="pecasUsadas" class="hidden">
+    <div class="card">
+      <h2>🛠️ Peças usadas</h2>
+      <div class="grid3">
+        <div class="input-camera">
+          <input id="usadasBusca" placeholder="🔎 Pesquisar peça" oninput="renderizarPecasUsadas()">
+          <button class="camera-btn" onclick="abrirScannerParaCampo('usadasBusca','renderizarPecasUsadas', false)" title="Ler QR Code">📷</button>
+        </div>
+        <input id="usadasInicio" type="date" onchange="renderizarPecasUsadas()">
+        <input id="usadasFim" type="date" onchange="renderizarPecasUsadas()">
+      </div>
+      <div class="grid">
+        <select id="usadasMarca" onchange="renderizarPecasUsadas()">
+          <option value="">🏷️ Todas as marcas</option>
+        </select>
+        <button class="btn-gray" onclick="limparFiltrosPecasUsadas()">Limpar filtros</button>
+      </div>
+      <p id="usadasResumo" class="filter-note"></p>
+      <div id="listaPecasUsadas"></div>
+    </div>
+  </section>
+
   <section id="movimentacoes" class="hidden">
     <div class="card">
       <h2>Filtros</h2>
@@ -625,7 +670,7 @@
 </main>
 
 <div id="modalEditarPeca" class="modal-bg"><div class="modal"><h2>Alterar peça</h2><p id="infoEditarPeca"></p><input id="editarPecaNome" placeholder="Nome da peça"><input id="editarPecaValor" type="number" min="0" step="0.01" placeholder="Valor da peça R$"><button class="btn-green" onclick="confirmarEdicaoPeca()">Salvar alterações</button><button class="btn-gray" onclick="fecharModal('modalEditarPeca')">Cancelar</button></div></div>
-<div id="modalBaixa" class="modal-bg"><div class="modal"><h2>Baixar peça / venda</h2><p id="infoBaixa"></p><input id="baixaQtd" type="number" min="1" placeholder="Quantidade"><select id="baixaResp"><option value="">Quem fez a baixa?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><textarea id="baixaObs" placeholder="Observação. Ex: cliente, OS, aparelho"></textarea><button class="btn-green" onclick="confirmarBaixa()">Confirmar</button><button class="btn-gray" onclick="fecharModal('modalBaixa')">Cancelar</button></div></div>
+<div id="modalBaixa" class="modal-bg"><div class="modal"><h2>Baixar peça / venda</h2><p id="infoBaixa"></p><input id="baixaQtd" type="number" min="1" placeholder="Quantidade"><select id="baixaResp"><option value="">Quem fez a baixa?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><div style="display:flex;align-items:center;gap:8px;margin:6px 0;"><input id="baixaSemOs" type="checkbox" style="width:auto;margin:0;" onchange="alternarCampoOS()"> <label for="baixaSemOs" style="font-weight:bold;">NÃO INFORMAR OS</label></div><input id="baixaOS" type="text" inputmode="numeric" placeholder="Número da OS (opcional se marcado)"><textarea id="baixaObs" placeholder="Observação. Ex: cliente, aparelho"></textarea><button class="btn-green" onclick="confirmarBaixa()">Confirmar</button><button class="btn-gray" onclick="fecharModal('modalBaixa')">Cancelar</button></div></div>
 <div id="modalReposicao" class="modal-bg"><div class="modal"><h2>Repor estoque</h2><p id="infoReposicao"></p><input id="reporEditPeca" placeholder="Nome da peça"><input id="reporEditValor" type="number" min="0" step="0.01" placeholder="Valor da peça R$"><input id="reporQtd" type="number" min="1" placeholder="Quantidade reposta"><select id="reporResp"><option value="">Quem fez a reposição?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><textarea id="reporObs" placeholder="Observação"></textarea><button class="btn-green" onclick="confirmarReposicao()">Confirmar</button><button class="btn-gray" onclick="fecharModal('modalReposicao')">Cancelar</button></div></div>
 <div id="modalGarantia" class="modal-bg"><div class="modal"><h2>Novo pedido de garantia</h2><p id="infoGarantia"></p><select id="garantiaResp"><option value="">Quem informou a garantia?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><select id="garantiaMotivo"><option>DEFEITO NA PEÇA</option><option>TOUCH NÃO FUNCIONA</option><option>DISPLAY SEM IMAGEM</option><option>PEÇA QUEBRADA</option><option>OUTRO</option></select><textarea id="garantiaInfo" placeholder="Informações relevantes"></textarea><button class="btn-purple" onclick="confirmarGarantia()">Abrir pedido e imprimir ticket</button><button class="btn-gray" onclick="fecharModal('modalGarantia')">Cancelar</button></div></div>
 <div id="modalStatusGarantia" class="modal-bg"><div class="modal"><h2>Atualizar garantia</h2><p id="infoStatusGarantia"></p><select id="novoStatusGarantia"><option>AGUARDANDO</option><option>ANÁLISE DE FORNECEDOR</option><option>GARANTIA APROVADA</option><option>GARANTIA NEGADA</option></select><select id="respStatusGarantia"><option value="">Quem atualizou?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><textarea id="obsStatusGarantia" placeholder="Observação"></textarea><button class="btn-green" onclick="confirmarStatusGarantia()">Salvar</button><button class="btn-gray" onclick="fecharModal('modalStatusGarantia')">Cancelar</button></div></div>
@@ -643,9 +688,7 @@
 <script>
 const SUPABASE_URL = "https://kplgkdancpoavempmroe.supabase.co";
 const SUPABASE_KEY = "sb_publishable_UuAKJ20rkSOUXudkym6fuA_CttWEXY_";
-const sb = (window.supabase && typeof window.supabase.createClient === "function")
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-  : null;
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let estoque = [];
 let historico = [];
@@ -679,26 +722,37 @@ let usuarioAtual = null;
 let usuariosSistemaOnline = [];
 
 async function carregarUsuariosSistema() {
-  const fallback = () => {
-    usuariosSistemaOnline = Object.entries(USUARIOS_SISTEMA).map(([login,u]) => ({
-      id: login, login, nome: u.nome, senha: u.senha,
-      senha_dev: u.senhaDev || "", dev: !!u.dev, ativo: true
+  try {
+    const res = await sb.from("usuarios").select("*").order("nome");
+    if (res.error) throw res.error;
+
+    usuariosSistemaOnline = res.data || [];
+
+    if (usuariosSistemaOnline.length === 0) {
+      usuariosSistemaOnline = Object.entries(USUARIOS_SISTEMA).map(([login, u]) => ({
+        id: login,
+        login,
+        nome: u.nome,
+        senha: u.senha,
+        senha_dev: u.senhaDev || "",
+        dev: !!u.dev,
+        ativo: true
+      }));
+    }
+
+    atualizarSelectLogin();
+  } catch (e) {
+    usuariosSistemaOnline = Object.entries(USUARIOS_SISTEMA).map(([login, u]) => ({
+      id: login,
+      login,
+      nome: u.nome,
+      senha: u.senha,
+      senha_dev: u.senhaDev || "",
+      dev: !!u.dev,
+      ativo: true
     }));
     atualizarSelectLogin();
-  };
-  fallback();
-  if (!sb) return;
-  try {
-    const res = await Promise.race([
-      sb.from("usuarios").select("*").order("nome"),
-      new Promise((_,reject)=>setTimeout(()=>reject(new Error("TIMEOUT")),5000))
-    ]);
-    if (res.error) throw res.error;
-    if (res.data && res.data.length) {
-      usuariosSistemaOnline=res.data;
-      atualizarSelectLogin();
-    }
-  } catch(e) { fallback(); }
+  }
 }
 
 function atualizarSelectLogin() {
@@ -721,38 +775,49 @@ function atualizarSelectLogin() {
 }
 
 async function iniciarLogin() {
+  await carregarUsuariosSistema();
+
   const salvo = localStorage.getItem("estoqueDM_usuario");
   if (salvo) {
     try {
       usuarioAtual = JSON.parse(salvo);
       aplicarUsuarioLogado();
-    } catch(e) {
+      return;
+    } catch (e) {
       localStorage.removeItem("estoqueDM_usuario");
-      document.getElementById("loginScreen").style.display="flex";
     }
-  } else {
-    document.getElementById("loginScreen").style.display="flex";
   }
-  await carregarUsuariosSistema();
+
+  document.getElementById("loginScreen").style.display = "flex";
 }
 
 function fazerLogin() {
-  const usuario=document.getElementById("loginUsuario").value;
-  const senha=document.getElementById("loginSenha").value;
-  let config=usuariosSistemaOnline.find(u=>u.login===usuario && u.ativo!==false);
-  if(!config) {
-    const local=USUARIOS_SISTEMA[usuario];
-    if(local) config={login:usuario,nome:local.nome,senha:local.senha,
-      senha_dev:local.senhaDev||"",dev:!!local.dev,ativo:true};
+  const usuario = document.getElementById("loginUsuario").value;
+  const senha = document.getElementById("loginSenha").value;
+  const config = usuariosSistemaOnline.find(u => u.login === usuario && u.ativo !== false);
+
+  if (!config) {
+    alert("Selecione o usuário.");
+    return;
   }
-  if(!config){ alert("Selecione o usuário."); return; }
-  let modoDev=false;
-  if(config.dev && config.senha_dev && senha===config.senha_dev) modoDev=true;
-  else if(senha!==config.senha){ alert("Senha incorreta."); return; }
-  usuarioAtual={usuario:config.login,nome:config.nome,dev:modoDev};
-  localStorage.setItem("estoqueDM_usuario",JSON.stringify(usuarioAtual));
+
+  let modoDev = false;
+
+  if (config.dev && config.senha_dev && senha === config.senha_dev) {
+    modoDev = true;
+  } else if (senha !== config.senha) {
+    alert("Senha incorreta.");
+    return;
+  }
+
+  usuarioAtual = {
+    usuario: config.login,
+    nome: config.nome,
+    dev: modoDev
+  };
+
+  localStorage.setItem("estoqueDM_usuario", JSON.stringify(usuarioAtual));
   aplicarUsuarioLogado();
-  if(typeof carregarTudo==="function") carregarTudo().catch(()=>setConexao(false));
 }
 
 function aplicarUsuarioLogado() {
@@ -777,7 +842,7 @@ function exigirDev() {
 }
 
 
-const titulos = {dashboard:"Início",cadastrar:"Cadastrar peça",baixar:"Baixar peça / venda",garantia:"Novo pedido de garantia",situacoesGarantia:"Situações da garantia",repor:"Repor estoque",etiquetas:"Etiquetas",ver:"Ver estoque",relatoriosCompra:"Relatórios para compra",movimentacoes:"Movimentações completas",desenvolvedor:"Desenvolvedor"};
+const titulos = {dashboard:"Início",cadastrar:"Cadastrar peça",baixar:"Baixar peça / venda",garantia:"Novo pedido de garantia",situacoesGarantia:"Situações da garantia",repor:"Repor estoque",etiquetas:"Etiquetas",ver:"Ver estoque",relatoriosCompra:"Relatórios para compra",movimentacoes:"Movimentações completas",pecasUsadas:"Peças usadas",desenvolvedor:"Desenvolvedor"};
 
 function dinheiro(v) { return Number(v||0).toLocaleString("pt-BR", {style:"currency", currency:"BRL"}); }
 function gerarId() { return Date.now().toString(36)+Math.random().toString(36).substring(2,8).toUpperCase(); }
@@ -824,6 +889,7 @@ function atualizarTelaAtual() {
   if(tela==="etiquetas") renderizarBuscaEtiqueta();
   if(tela==="relatoriosCompra") renderizarRelatoriosCompra();
   if(tela==="movimentacoes") renderizarHistorico();
+  if(tela==="pecasUsadas") renderizarPecasUsadas();
   if(tela==="desenvolvedor") { carregarUsuariosDev(); renderizarProdutosDev(); carregarOpcoesEspeciais(); atualizarDescricaoEspecial(); }
 }
 
@@ -836,11 +902,44 @@ function abrirTela(tela) {
   atualizarTelaAtual();
 }
 
+function inicioDoDiaLocal(d = new Date()) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function mesmaDataLocal(iso, dataRef = new Date()) {
+  if (!iso) return false;
+  const d = new Date(iso);
+  const r = inicioDoDiaLocal(dataRef);
+  return d >= r && d < new Date(r.getTime() + 86400000);
+}
+function garantiasAbertas() {
+  return historico.filter(h => h.acao === "GARANTIA ABERTA" &&
+    !["GARANTIA APROVADA","GARANTIA NEGADA"].includes(h.garantiaStatus || h.garantiaSituacao || "AGUARDANDO"));
+}
+function pecasUsadasHoje() {
+  return historico.filter(h => h.acao === "USAR" && mesmaDataLocal(h.dataISO));
+}
 function atualizarDashboard() {
+  const totalDisponivel = estoque.reduce((s,p) => s + Number(p.qtd || 0), 0);
+  const zeradas = estoque.filter(p => Number(p.qtd || 0) <= 0).length;
+  const usadasHoje = pecasUsadasHoje().reduce((s,h) => s + Number(h.qtdMov || 0), 0);
+  const garantias = garantiasAbertas().length;
+
   document.getElementById("totalPecas").innerText = estoque.length;
-  document.getElementById("valorEstoque").innerText = dinheiro(estoque.reduce((s,p)=>s+(p.valor*p.qtd),0));
-  document.getElementById("totalZeradas").innerText = estoque.filter(p=>p.qtd<=0).length;
-  document.getElementById("totalGarantias").innerText = historico.filter(h=>h.acao==="GARANTIA ABERTA" && !["GARANTIA APROVADA","GARANTIA NEGADA"].includes(h.garantiaStatus || h.garantiaSituacao || "AGUARDANDO")).length;
+  document.getElementById("valorEstoque").innerText = dinheiro(estoque.reduce((s,p)=>s+(Number(p.valor||0)*Number(p.qtd||0)),0));
+  document.getElementById("totalZeradas").innerText = zeradas;
+  document.getElementById("totalGarantias").innerText = garantias;
+
+  document.getElementById("quickEstoque").innerText = totalDisponivel;
+  document.getElementById("quickZeradas").innerText = zeradas;
+  document.getElementById("quickUsadasHoje").innerText = usadasHoje;
+  document.getElementById("quickGarantias").innerText = garantias;
+}
+
+function abrirEstoqueZerado() {
+  abrirTela("ver");
+  const campo = document.getElementById("pesquisa");
+  if (campo) campo.value = "";
+  renderizarEstoque(true);
 }
 
 function gerarCodigo() {
@@ -853,7 +952,7 @@ async function cadastrarPeca() {
   const peca = document.getElementById("cadPeca").value.trim().toUpperCase();
   const qtd = Number(document.getElementById("cadQtd").value);
   const valor = Number(document.getElementById("cadValor").value);
-  if(!codigo || !peca || qtd<0 || Number.isNaN(qtd) || valor<0 || Number.isNaN(valor)) return alert("Preencha corretamente.");
+  if(!/^\\d{5}$/.test(codigo) || !peca || qtd<0 || Number.isNaN(qtd) || valor<0 || Number.isNaN(valor)) return alert("O código deve ter exatamente 5 dígitos e os demais campos devem estar preenchidos corretamente.");
   const existente = estoque.find(p=>p.codigo===codigo);
   const situacao = qtd>0 ? "ESTOQUE OK" : "ESTOQUE ZERADO";
   const qtdAnterior = existente ? existente.qtd : 0;
@@ -906,23 +1005,67 @@ function buscarParaBaixa() {
 
 function abrirModalBaixa(codigo) {
   codigoSelecionado=codigo; const item=estoque.find(p=>p.codigo===codigo);
+  if (!item) return alert("Peça não encontrada.");
   document.getElementById("infoBaixa").innerText=`${item.codigo} - ${item.peca} | Estoque: ${item.qtd} | Valor: ${dinheiro(item.valor)}`;
-  document.getElementById("baixaQtd").value="1"; document.getElementById("baixaResp").value=usuarioAtual?.nome?.toUpperCase() || ""; document.getElementById("baixaObs").value="";
+  document.getElementById("baixaQtd").value="1";
+  document.getElementById("baixaResp").value=usuarioAtual?.nome?.toUpperCase() || "";
+  document.getElementById("baixaSemOs").checked=false;
+  document.getElementById("baixaOS").value="";
+  document.getElementById("baixaObs").value="";
+  alternarCampoOS();
   document.getElementById("modalBaixa").style.display="flex";
+}
+function alternarCampoOS() {
+  const semOs = document.getElementById("baixaSemOs")?.checked;
+  const campo = document.getElementById("baixaOS");
+  if (!campo) return;
+  campo.disabled = !!semOs;
+  campo.required = !semOs;
+  if (semOs) campo.value = "";
 }
 
 async function confirmarBaixa() {
-  const item=estoque.find(p=>p.codigo===codigoSelecionado), qtdMov=Number(document.getElementById("baixaQtd").value), responsavel=document.getElementById("baixaResp").value, obs=document.getElementById("baixaObs").value.trim();
+  const item=estoque.find(p=>p.codigo===codigoSelecionado);
+  const qtdMov=Number(document.getElementById("baixaQtd").value);
+  const responsavel=document.getElementById("baixaResp").value;
+  const semOs=document.getElementById("baixaSemOs").checked;
+  const os=document.getElementById("baixaOS").value.trim();
+  const obs=document.getElementById("baixaObs").value.trim();
+
   if(!item || !qtdMov || qtdMov<=0 || !responsavel) return alert("Informe quantidade e responsável.");
-  const qtdAnterior=item.qtd; const novaQtd=Math.max(0,qtdAnterior-qtdMov); const situacao=novaQtd<=0?"ESTOQUE ZERADO":"ESTOQUE OK";
+  if(!semOs && !os) return alert("Informe o número da OS ou marque 'NÃO INFORMAR OS'.");
+  if(qtdMov > Number(item.qtd||0)) return alert("Quantidade maior que o estoque disponível.");
+
+  const qtdAnterior=item.qtd;
+  const novaQtd=Math.max(0,qtdAnterior-qtdMov);
+  const situacao=novaQtd<=0?"ESTOQUE ZERADO":"ESTOQUE OK";
+  const observacaoFinal = [
+    semOs ? "OS: NÃO INFORMADA" : `OS: ${os}`,
+    obs
+  ].filter(Boolean).join(" | ");
+
   let res=await sb.from("pecas").update({qtd:novaQtd,situacao,updated_at:new Date().toISOString()}).eq("codigo",item.codigo);
   if(res.error)return alert(res.error.message);
-  await inserirMovimentacao({tipo:"VENDA",garantiaStatus:"SEM GARANTIA",responsavel,codigo:item.codigo,peca:item.peca,acao:"USAR",qtdMov,qtdAnterior,novaQtd,valorUnit:item.valor,valorTotal:item.valor*qtdMov,observacao:obs});
+
+  try {
+    await inserirMovimentacao({
+      tipo:"VENDA", garantiaStatus:"SEM GARANTIA", responsavel,codigo:item.codigo,peca:item.peca,acao:"USAR",
+      qtdMov,qtdAnterior,novaQtd,valorUnit:item.valor,valorTotal:item.valor*qtdMov,observacao:observacaoFinal
+    });
+  } catch (err) {
+    alert("A baixa foi alterada no estoque, mas não foi possível registrar a movimentação: " + (err.message || err));
+    await carregarTudo();
+    return;
+  }
+
   fecharModal("modalBaixa");
+  codigoSelecionado = null;
   const campoBaixa = document.getElementById("baixarBusca");
   if (campoBaixa) campoBaixa.value = "";
   const resultadoBaixar = document.getElementById("resultadoBaixar");
   if (resultadoBaixar) resultadoBaixar.innerHTML = "";
+  document.getElementById("baixaOS").value = "";
+  document.getElementById("baixaSemOs").checked = false;
   await carregarTudo();
   aviso("Baixa registrada");
 }
@@ -1033,121 +1176,6 @@ function imprimirTicketGarantiaLimpo(garantia, venda, info) {
     }, 250);
   };
 <\/script>
-
-<script id="dashboard-interativo-js">
-(function(){
-  function qs(id){return document.getElementById(id);}
-  function showSectionById(id){
-    const el=qs(id);
-    if(!el)return false;
-    document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));
-    el.classList.remove("hidden");
-    window.scrollTo({top:0,behavior:"smooth"});
-    return true;
-  }
-  function goMenu(text, fallbackId){
-    // Try existing navigation buttons/links first.
-    const nodes=[...document.querySelectorAll("button,a,[role='button']")];
-    const n=nodes.find(x=>(x.textContent||"").trim().toLowerCase().includes(text.toLowerCase()));
-    if(n){n.click();return true;}
-    return showSectionById(fallbackId);
-  }
-  function todayKey(){
-    const d=new Date();
-    return d.toISOString().slice(0,10);
-  }
-  function usedToday(){
-    const h=Array.isArray(window.historico)?window.historico:[];
-    return h.filter(x=>{
-      const type=String(x.tipo||"").toUpperCase();
-      const action=String(x.acao||"").toUpperCase();
-      const date=String(x.data_iso||x.data||"").slice(0,10);
-      return date===todayKey() && (type==="VENDA" || action.includes("USAR") || action.includes("BAIXA"));
-    });
-  }
-  function countStock(){
-    const p=Array.isArray(window.estoque)?window.estoque:[];
-    return p.reduce((n,x)=>n+Number(x.qtd||0),0);
-  }
-  function zeroStock(){
-    const p=Array.isArray(window.estoque)?window.estoque:[];
-    return p.filter(x=>Number(x.qtd||0)<=0);
-  }
-  function openDetail(title, rows){
-    const box=qs("dashboardDetalhe");
-    if(!box)return;
-    qs("dashboardDetalheTitulo").textContent=title;
-    const list=qs("dashboardDetalheLista");
-    list.innerHTML=rows.length?rows.map(x=>`<div class="dashboard-list-item"><div><strong>${x.title}</strong><small>${x.sub||""}</small></div><strong>${x.value||""}</strong></div>`).join(""):`<div class="dashboard-empty">Nenhum registro encontrado.</div>`;
-    box.classList.remove("hidden");
-    box.scrollIntoView({behavior:"smooth",block:"start"});
-  }
-  function refresh(){
-    const used=usedToday(), zero=zeroStock(), total=countStock();
-    const a=qs("dashTotalEstoque"); if(a)a.textContent=total;
-    const b=qs("dashZeradas"); if(b)b.textContent=zero.length;
-    const c=qs("dashUsadasHoje"); if(c)c.textContent=used.reduce((n,x)=>n+Number(x.qtdMov||x.quantidade||1),0);
-    const g=qs("dashGarantias"); if(g){
-      const h=Array.isArray(window.garantias)?window.garantias:[];
-      g.textContent=h.filter(x=>!["GARANTIA APROVADA","GARANTIA NEGADA"].includes(String(x.status||"").toUpperCase())).length;
-    }
-  }
-  window.abrirDashboardCard=function(tipo){
-    if(tipo==="estoque"){
-      return goMenu("estoque","estoque");
-    }
-    if(tipo==="zeradas"){
-      const z=zeroStock();
-      openDetail("Peças zeradas",z.map(x=>({title:x.peca||x.nome||"Peça",sub:"Código: "+(x.codigo||"-"),value:"0"})));
-      return;
-    }
-    if(tipo==="usadas"){
-      const u=usedToday();
-      openDetail("Peças usadas hoje",u.map(x=>({title:x.peca||x.nome||"Peça",sub:(x.codigo?"Código: "+x.codigo+" · ":"")+(x.os?"OS: "+x.os:"OS não informada"),value:"-"+(x.qtdMov||x.quantidade||1)})));
-      return;
-    }
-    if(tipo==="garantias"){
-      return goMenu("situações da garantia","situacoesGarantia");
-    }
-  };
-  window.fecharDashboardDetalhe=function(){qs("dashboardDetalhe")?.classList.add("hidden");};
-
-  function build(){
-    // Find a likely dashboard/home section and place cards near its beginning.
-    const sections=[...document.querySelectorAll("section")];
-    let home=sections.find(s=>/in[ií]cio|dashboard|inicial/i.test((s.id||"")+" "+(s.textContent||"").slice(0,300)));
-    if(!home)return;
-    if(qs("dashboardInterativo"))return;
-    const wrap=document.createElement("div");
-    wrap.id="dashboardInterativo";
-    wrap.innerHTML=`
-      <div class="dashboard-section-title">Visão rápida</div>
-      <div class="dashboard-cards">
-        <div class="dashboard-card" onclick="abrirDashboardCard('estoque')"><div class="dash-icon">📦</div><div class="dash-title">ESTOQUE</div><div id="dashTotalEstoque" class="dash-value">0</div><div class="dash-help">Tocar para abrir o estoque</div><div class="dash-arrow">›</div></div>
-        <div class="dashboard-card" onclick="abrirDashboardCard('zeradas')"><div class="dash-icon">⚠️</div><div class="dash-title">ZERADAS</div><div id="dashZeradas" class="dash-value">0</div><div class="dash-help">Tocar para ver as peças</div><div class="dash-arrow">›</div></div>
-        <div class="dashboard-card" onclick="abrirDashboardCard('usadas')"><div class="dash-icon">🛠️</div><div class="dash-title">PEÇAS USADAS HOJE</div><div id="dashUsadasHoje" class="dash-value">0</div><div class="dash-help">Tocar para ver os detalhes</div><div class="dash-arrow">›</div></div>
-        <div class="dashboard-card" onclick="abrirDashboardCard('garantias')"><div class="dash-icon">🛡️</div><div class="dash-title">GARANTIAS</div><div id="dashGarantias" class="dash-value">0</div><div class="dash-help">Tocar para acompanhar</div><div class="dash-arrow">›</div></div>
-      </div>
-      <div id="dashboardDetalhe" class="dashboard-detail hidden card">
-        <div class="dashboard-detail-head"><h3 id="dashboardDetalheTitulo">Detalhes</h3><button class="dashboard-close" onclick="fecharDashboardDetalhe()">Fechar</button></div>
-        <div id="dashboardDetalheLista"></div>
-      </div>`;
-    home.prepend(wrap);
-    refresh();
-  }
-
-  document.addEventListener("DOMContentLoaded",()=>setTimeout(build,250));
-  setInterval(refresh,2500);
-  const oldCarregarTudo=window.carregarTudo;
-  if(typeof oldCarregarTudo==="function"){
-    window.carregarTudo=async function(){
-      const r=await oldCarregarTudo.apply(this,arguments);
-      refresh();
-      return r;
-    };
-  }
-})();
-</script>
 </body>
 </html>`;
 
@@ -1284,19 +1312,23 @@ async function confirmarReposicao() {
     observacaoFinal += ` | Cadastro atualizado na reposição. Nome: ${nomeAntigo} > ${novoNome}. Valor: ${dinheiro(valorAntigo)} > ${dinheiro(novoValor)}.`;
   }
 
-  await inserirMovimentacao({
-    tipo: "REPOSICAO",
-    responsavel,
-    codigo: item.codigo,
-    peca: novoNome,
-    acao: "REPOR ESTOQUE",
-    qtdMov,
-    qtdAnterior,
-    novaQtd,
-    valorUnit: novoValor,
-    valorTotal: novoValor * qtdMov,
-    observacao: observacaoFinal
-  });
+  try {
+    await inserirMovimentacao({
+      tipo: "REPOSICAO",
+      responsavel,
+      codigo: item.codigo,
+      peca: novoNome,
+      acao: "REPOR ESTOQUE",
+      qtdMov,
+      qtdAnterior,
+      novaQtd,
+      valorUnit: novoValor,
+      valorTotal: novoValor * qtdMov,
+      observacao: observacaoFinal
+    });
+  } catch (err) {
+    alert("A reposição foi salva no estoque, mas não foi possível registrar a movimentação: " + (err.message || err));
+  }
 
   fecharModal("modalReposicao");
   await carregarTudo();
@@ -1457,6 +1489,7 @@ async function imprimirEtiquetasSelecionadas() {
           <img class="qr" src="${qrUrl(textoQrPeca(item), 180)}">
           <div class="valor">${dinheiro(item.valor)}</div>
           <div class="marca">ESTOQUE DM CELULAR</div>
+          <div class="codigo">COD: ${item.codigo}</div>
         </div>
       `);
     }
@@ -1487,6 +1520,15 @@ async function imprimirEtiquetasSelecionadas() {
     justify-content: space-between;
     color: #000;
     overflow: hidden;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .etiqueta:last-child {
+    page-break-after: auto;
+    break-after: auto;
   }
 
   .peca {
@@ -1514,6 +1556,14 @@ async function imprimirEtiquetasSelecionadas() {
     text-align: center;
     width: 100%;
     letter-spacing: -1px;
+  }
+
+  .codigo {
+    font-size: 7px;
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    width: 100%;
   }
 
   .marca {
@@ -1762,9 +1812,89 @@ function usarDescricaoEspecial() {
   aviso("Descrição preenchida no cadastro");
 }
 
-function renderizarEstoque() {
-  const termo=(document.getElementById("pesquisa").value||"").toLowerCase(); const tbody=document.getElementById("tabelaEstoque"); tbody.innerHTML="";
-  estoque.filter(i=>i.codigo.toLowerCase().includes(termo)||i.peca.toLowerCase().includes(termo)).forEach(item=>{ const tr=document.createElement("tr"); tr.className=classeStatus(item.situacao); tr.innerHTML=`<td data-label="Código">${item.codigo}</td><td data-label="QTD">${item.qtd}</td><td data-label="Peça">${item.peca}</td><td data-label="Valor">${dinheiro(item.valor)}</td><td data-label="Situação">${item.situacao}</td><td data-label="Ação" class="actions"><button onclick="abrirModalBaixa('${item.codigo}')">Baixar</button><button class="btn-green" onclick="abrirModalReposicao('${item.codigo}')">Repor</button><button class="btn-gray" onclick="abrirModalEditarPeca('${item.codigo}')">Alterar</button></td>`; tbody.appendChild(tr); });
+function renderizarEstoque(somenteZeradas = false) {
+  const termo=(document.getElementById("pesquisa")?.value||"").toLowerCase();
+  const tbody=document.getElementById("tabelaEstoque");
+  if (!tbody) return;
+  tbody.innerHTML="";
+  estoque
+    .filter(i => !somenteZeradas || Number(i.qtd||0) <= 0)
+    .filter(i=>i.codigo.toLowerCase().includes(termo)||i.peca.toLowerCase().includes(termo))
+    .forEach(item=>{ const tr=document.createElement("tr"); tr.className=classeStatus(item.situacao); tr.innerHTML=`<td data-label="Código">${item.codigo}</td><td data-label="QTD">${item.qtd}</td><td data-label="Peça">${item.peca}</td><td data-label="Valor">${dinheiro(item.valor)}</td><td data-label="Situação">${item.situacao}</td><td data-label="Ação" class="actions"><button onclick="abrirModalBaixa('${item.codigo}')">Baixar</button><button class="btn-green" onclick="abrirModalReposicao('${item.codigo}')">Repor</button><button class="btn-gray" onclick="abrirModalEditarPeca('${item.codigo}')">Alterar</button></td>`; tbody.appendChild(tr); });
+}
+
+function extrairOS(observacao) {
+  const m = String(observacao || "").match(/(?:^|\\|)\\s*OS:\s*([^|]+)/i);
+  return m ? m[1].trim() : "";
+}
+function marcaDaPeca(peca) {
+  const partes = String(peca || "").trim().split(/\\s+/);
+  return partes.length >= 2 ? partes[1].toUpperCase() : "";
+}
+function preencherMarcasPecasUsadas() {
+  const select = document.getElementById("usadasMarca");
+  if (!select) return;
+  const atual = select.value;
+  const marcas = [...new Set(historico.filter(h => h.acao === "USAR").map(h => marcaDaPeca(h.peca)).filter(Boolean))].sort();
+  select.innerHTML = '<option value="">🏷️ Todas as marcas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join("");
+  if (marcas.includes(atual)) select.value = atual;
+}
+function limparFiltrosPecasUsadas() {
+  ["usadasBusca","usadasInicio","usadasFim"].forEach(id => { const e=document.getElementById(id); if(e) e.value=""; });
+  const marca=document.getElementById("usadasMarca"); if(marca) marca.value="";
+  renderizarPecasUsadas();
+}
+function toggleDetalhesUsada(id) {
+  const el=document.getElementById(id);
+  if (el) el.classList.toggle("hidden");
+}
+function renderizarPecasUsadas() {
+  const div=document.getElementById("listaPecasUsadas");
+  if (!div) return;
+  preencherMarcasPecasUsadas();
+
+  const busca=(document.getElementById("usadasBusca")?.value||"").toLowerCase().trim();
+  const inicio=document.getElementById("usadasInicio")?.value||"";
+  const fim=document.getElementById("usadasFim")?.value||"";
+  const marca=(document.getElementById("usadasMarca")?.value||"").toUpperCase();
+
+  const lista=historico
+    .filter(h=>h.acao==="USAR")
+    .filter(h=>dentroPeriodo(h,inicio,fim))
+    .filter(h=>!busca || `${h.codigo} ${h.peca}`.toLowerCase().includes(busca))
+    .filter(h=>!marca || marcaDaPeca(h.peca)===marca)
+    .sort((a,b)=>new Date(b.dataISO||0)-new Date(a.dataISO||0));
+
+  const total=lista.reduce((s,h)=>s+Number(h.qtdMov||0),0);
+  const resumo=document.getElementById("usadasResumo");
+  if (resumo) resumo.innerText=`${lista.length} movimentação(ões) encontrada(s) • ${total} peça(s) utilizada(s).`;
+
+  div.innerHTML="";
+  if(!lista.length){ div.innerHTML="<p>Nenhuma peça usada encontrada com os filtros informados.</p>"; return; }
+
+  lista.forEach((h,index)=>{
+    const detailId=`usadaDetalhe_${String(h.id||index).replace(/[^a-zA-Z0-9_-]/g,"_")}`;
+    const os=extrairOS(h.observacao);
+    const card=document.createElement("div");
+    card.className="used-item";
+    card.onclick=()=>toggleDetalhesUsada(detailId);
+    card.innerHTML=`
+      <div class="used-summary">${h.peca || "PEÇA SEM DESCRIÇÃO"}</div>
+      <div class="small">Código: ${h.codigo || "—"}<br>Data: ${h.dataISO ? new Date(h.dataISO).toLocaleDateString("pt-BR") : (h.data||"—")}</div>
+      <div id="${detailId}" class="used-details hidden">
+        <strong>Código:</strong> ${h.codigo || "—"}<br>
+        <strong>Descrição:</strong> ${h.peca || "—"}<br>
+        <strong>Quantidade:</strong> ${Number(h.qtdMov||0)}<br>
+        <strong>Valor:</strong> ${dinheiro(h.valorUnit)}<br>
+        <strong>OS:</strong> ${os || "NÃO INFORMADA"}<br>
+        <strong>Técnico/Responsável:</strong> ${h.responsavel || "—"}<br>
+        <strong>Data e hora:</strong> ${h.dataISO ? new Date(h.dataISO).toLocaleString("pt-BR") : (h.data||"—")}<br>
+        ${h.qtdAnterior !== null && h.qtdAnterior !== undefined ? `<strong>Estoque antes:</strong> ${h.qtdAnterior}<br>` : ""}
+        ${h.novaQtd !== null && h.novaQtd !== undefined ? `<strong>Estoque depois:</strong> ${h.novaQtd}<br>` : ""}
+        ${h.observacao ? `<strong>Observação:</strong> ${h.observacao}` : ""}
+      </div>`;
+    div.appendChild(card);
+  });
 }
 
 function dentroPeriodo(h,inicio,fim) { const d=h.dataISO?new Date(h.dataISO):null; if(!d)return true; if(inicio && d<new Date(inicio+"T00:00:00"))return false; if(fim && d>new Date(fim+"T23:59:59"))return false; return true; }
@@ -2022,7 +2152,8 @@ async function zerarTodoEstoque() {
 
 
 
-iniciarLogin().catch(()=>{document.getElementById("loginScreen").style.display="flex";});
+iniciarLogin();
+carregarTudo();
 </script>
 </body>
 </html>
