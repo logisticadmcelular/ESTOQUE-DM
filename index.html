@@ -852,7 +852,16 @@
 
 </main>
 
-<div id="modalEditarPeca" class="modal-bg"><div class="modal"><h2>Alterar peça</h2><p id="infoEditarPeca"></p><input id="editarPecaNome" placeholder="Nome da peça"><input id="editarPecaValor" type="number" min="0" step="0.01" placeholder="Valor da peça R$"><button class="btn-green" onclick="confirmarEdicaoPeca()">Salvar alterações</button><button class="btn-gray" onclick="fecharModal('modalEditarPeca')">Cancelar</button></div></div>
+<div
+<div class="form-group" style="margin-top:10px;">
+  <label for="baixaCidade">📍 Cidade da baixa</label>
+  <select id="baixaCidade">
+    <option value="">Selecione a cidade</option>
+    <option value="Cesário Lange">Cesário Lange</option>
+    <option value="Quadra">Quadra</option>
+  </select>
+</div>
+ id="modalEditarPeca" class="modal-bg"><div class="modal"><h2>Alterar peça</h2><p id="infoEditarPeca"></p><input id="editarPecaNome" placeholder="Nome da peça"><input id="editarPecaValor" type="number" min="0" step="0.01" placeholder="Valor da peça R$"><button class="btn-green" onclick="confirmarEdicaoPeca()">Salvar alterações</button><button class="btn-gray" onclick="fecharModal('modalEditarPeca')">Cancelar</button></div></div>
 <div id="modalBaixa" class="modal-bg"><div class="modal"><h2>Baixar peça / venda</h2><p id="infoBaixa"></p><input id="baixaQtd" type="number" min="1" placeholder="Quantidade"><select id="baixaResp"><option value="">Quem fez a baixa?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><div style="display:flex;align-items:center;gap:8px;margin:6px 0;"><input id="baixaSemOs" type="checkbox" style="width:auto;margin:0;" onchange="alternarCampoOS()"> <label for="baixaSemOs" style="font-weight:bold;">NÃO INFORMAR OS</label></div><input id="baixaOS" type="text" inputmode="numeric" placeholder="Número da OS (opcional se marcado)"><textarea id="baixaObs" placeholder="Observação. Ex: cliente, aparelho"></textarea><button class="btn-green" onclick="confirmarBaixa()">Confirmar</button><button class="btn-gray" onclick="fecharModal('modalBaixa')">Cancelar</button></div></div>
 <div id="modalReposicao" class="modal-bg"><div class="modal"><h2>Repor estoque</h2><p id="infoReposicao"></p><input id="reporEditPeca" placeholder="Nome da peça"><input id="reporEditValor" type="number" min="0" step="0.01" placeholder="Valor da peça R$"><input id="reporQtd" type="number" min="1" placeholder="Quantidade reposta"><select id="reporResp"><option value="">Quem fez a reposição?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><textarea id="reporObs" placeholder="Observação"></textarea><button class="btn-green" onclick="confirmarReposicao()">Confirmar</button><button class="btn-gray" onclick="fecharModal('modalReposicao')">Cancelar</button></div></div>
 <div id="modalGarantia" class="modal-bg"><div class="modal"><h2>Novo pedido de garantia</h2><p id="infoGarantia"></p><select id="garantiaResp"><option value="">Quem informou a garantia?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><select id="garantiaMotivo"><option>DEFEITO NA PEÇA</option><option>TOUCH NÃO FUNCIONA</option><option>DISPLAY SEM IMAGEM</option><option>PEÇA QUEBRADA</option><option>OUTRO</option></select><textarea id="garantiaInfo" placeholder="Informações relevantes"></textarea><button class="btn-purple" onclick="confirmarGarantia()">Abrir pedido e imprimir ticket</button><button class="btn-gray" onclick="fecharModal('modalGarantia')">Cancelar</button></div></div>
@@ -1227,6 +1236,7 @@ function buscarParaBaixa() {
 }
 
 function abrirModalBaixa(codigo) {
+  limparCidadeBaixaDM();
   codigoSelecionado=codigo; const item=estoque.find(p=>p.codigo===codigo);
   if (!item) return alert("Peça não encontrada.");
   document.getElementById("infoBaixa").innerText=`${item.codigo} - ${item.peca} | Estoque: ${item.qtd} | Valor: ${dinheiro(item.valor)}`;
@@ -1248,6 +1258,13 @@ function alternarCampoOS() {
 }
 
 async function confirmarBaixa() {
+  const cidadeBaixa = document.getElementById("baixaCidade")?.value || "";
+  if (!cidadeBaixa) {
+    alert("Selecione a cidade da baixa: Quadra ou Cesário Lange.");
+    document.getElementById("baixaCidade")?.focus();
+    return;
+  }
+
   const item=estoque.find(p=>p.codigo===codigoSelecionado);
   const qtdMov=Number(document.getElementById("baixaQtd").value);
   const responsavel=document.getElementById("baixaResp").value;
@@ -1273,7 +1290,7 @@ async function confirmarBaixa() {
   try {
     await inserirMovimentacao({
       tipo:"VENDA", garantiaStatus:"SEM GARANTIA", responsavel,codigo:item.codigo,peca:item.peca,acao:"USAR",
-      qtdMov,qtdAnterior,novaQtd,valorUnit:item.valor,valorTotal:item.valor*qtdMov,observacao:observacaoFinal
+      qtdMov,qtdAnterior,novaQtd,valorUnit:item.valor,valorTotal:item.valor*qtdMov,observacao:`${observacaoFinal || ""}${cidadeBaixa ? " | Cidade: " + cidadeBaixa : ""}`
     });
   } catch (err) {
     alert("A baixa foi alterada no estoque, mas não foi possível registrar a movimentação: " + (err.message || err));
@@ -2510,6 +2527,8 @@ function renderizarUsuariosDev() {
       Permissão: ${u.dev ? "DESENVOLVEDOR" : "NORMAL"}<br>
       Status: ${u.ativo === false ? "INATIVO" : "ATIVO"}
       <button onclick="editarUsuarioDev('${u.id}')">Alterar</button>
+<button id="menuInventarioDev" class="menu-item" type="button" onclick="abrirInventarioQrDev(); fecharMenu();" style="display:none;">📦 Conferir estoque</button>
+
       <button class="btn-red" onclick="excluirUsuarioDev('${u.id}')">Excluir</button>
     `;
     div.appendChild(card);
@@ -2892,6 +2911,75 @@ function atualizarMenuDevOnly() {
   });
 }
 document.addEventListener("DOMContentLoaded", atualizarMenuDevOnly);
+
+
+function ehModoDesenvolvedorDM() {
+  try {
+    const u = (typeof usuarioAtual !== "undefined") ? usuarioAtual : null;
+    return !!u && (
+      u.tipo === "DEV" || u.tipo === "dev" ||
+      u.perfil === "DEV" || u.perfil === "dev" ||
+      u.role === "DEV" || u.role === "dev" ||
+      u.is_dev === true || u.isDev === true ||
+      String(u.nome || u.usuario || "").toUpperCase() === "DESENVOLVEDOR"
+    );
+  } catch (_) { return false; }
+}
+function atualizarMenuInventarioDev() {
+  const el = document.getElementById("menuInventarioDev");
+  if (el) el.style.display = ehModoDesenvolvedorDM() ? "flex" : "none";
+}
+function abrirInventarioQrDev() {
+  if (!ehModoDesenvolvedorDM()) {
+    alert("A conferência de estoque está disponível somente no modo desenvolvedor.");
+    return;
+  }
+  iniciarConferenciaInventario();
+  abrirTela("inventarioQr");
+}
+document.addEventListener("DOMContentLoaded", () => {
+  atualizarMenuInventarioDev();
+  setTimeout(atualizarMenuInventarioDev, 500);
+  setTimeout(atualizarMenuInventarioDev, 1500);
+});
+setInterval(atualizarMenuInventarioDev, 1500);
+
+
+function loginEnterHandlerDM(event) {
+  if (event.key !== "Enter") return;
+  const alvo = event.target;
+  const telaLogin = document.getElementById("login") ||
+                    document.getElementById("telaLogin") ||
+                    document.querySelector('[id*="login" i]');
+  const dentroLogin = telaLogin ? telaLogin.contains(alvo) : false;
+  const tipo = String(alvo?.type || "").toLowerCase();
+  const nome = String(alvo?.id || "") + " " + String(alvo?.name || "");
+  const pareceLogin = /senha|password|usuario|login|email/i.test(nome) || tipo === "password";
+  if (!dentroLogin && !pareceLogin) return;
+
+  event.preventDefault();
+
+  // Use the existing virtual login button/function so authentication remains unchanged.
+  const botao = document.querySelector(
+    '#login button[type="submit"], #telaLogin button[type="submit"], ' +
+    '#login button, #telaLogin button, button[onclick*="login" i], button[onclick*="entrar" i]'
+  );
+  if (botao && !botao.disabled) {
+    botao.click();
+    return;
+  }
+
+  // Fallback: submit the nearest form if the existing login is a form.
+  const form = alvo?.closest?.("form");
+  if (form) form.requestSubmit ? form.requestSubmit() : form.submit();
+}
+document.addEventListener("keydown", loginEnterHandlerDM, true);
+
+
+function limparCidadeBaixaDM() {
+  const e = document.getElementById("baixaCidade");
+  if (e) e.value = "";
+}
 
 </script>
 </body>
