@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estoque DM - Online</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; font-family: Arial, sans-serif; }
     body { margin: 0; background: #f3f4f6; color: #111827; }
@@ -365,20 +364,7 @@
       td { border:none; padding:6px; }
       td::before { content: attr(data-label); font-weight:bold; display:block; color:#374151; }
     }
-  
-    .impressao-remota-status { margin-top:10px; padding:10px 12px; border-radius:10px; background:#f3f4f6; font-size:12px; line-height:1.4; }
-    .impressao-remota-status.ok { background:#ecfdf5; color:#166534; }
-    .impressao-remota-status.warn { background:#fff7ed; color:#9a3412; }
-    .printer-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:12px; font-weight:800; margin-top:7px; }
-  
-/* Conferência de inventário DEV */
-.progress-track{height:10px;background:#e9ecef;border-radius:999px;overflow:hidden}
-.progress-fill{height:100%;width:0%;transition:width .25s ease}
-.inventory-ok{padding:10px;border-radius:10px;background:#eaf7ee}
-.inventory-warn{padding:10px;border-radius:10px;background:#fff6df}
-.inventory-bad{padding:10px;border-radius:10px;background:#fdecec}
-.inv-divergencia{padding:12px;border:1px solid #ddd;border-radius:12px;margin-bottom:8px}
-</style>
+  </style>
 </head>
 <body>
 
@@ -419,10 +405,6 @@
     <button onclick="abrirTela('movimentacoes')">📋 Movimentações completas</button>
     <button onclick="abrirTela('pecasUsadas')">🛠️ Peças usadas</button>
     <button class="dev-only" onclick="abrirTela('desenvolvedor')">🛠️ Desenvolvedor</button>
-<button class="menu-item dev-only" onclick="abrirInventarioQrDev(); fecharMenu();" style="display:none;">
-  📦 Conferência de inventário
-</button>
-
     <button class="btn-red" onclick="sairDoSistema()">🚪 Sair</button>
   </nav>
 </div>
@@ -639,10 +621,9 @@
       </div>
       <div id="resumoEtiquetas" class="label-cart">Nenhuma etiqueta selecionada.</div>
       <div class="grid">
-        <button class="btn-green" onclick="imprimirEtiquetasSelecionadas()">🖨️ Imprimir etiquetas</button>
+        <button onclick="imprimirEtiquetasSelecionadas()">Imprimir etiquetas selecionadas</button>
         <button class="btn-red" onclick="limparEtiquetasSelecionadas()">Limpar seleção</button>
       </div>
-      <div id="impressaoRemotaStatus" class="impressao-remota-status"></div>
       <div id="resultadoEtiquetas"></div>
     </div>
 
@@ -729,17 +710,6 @@
     </div>
 
     <div class="card">
-      <h2>🖨️ Impressora padrão da loja</h2>
-      <p class="small">A impressão remota usa uma função segura no Supabase. A chave da PrintNode e o ID da impressora ficam somente no servidor.</p>
-      <input id="printProxyUrl" placeholder="URL da função segura de impressão">
-      <div class="grid">
-        <button onclick="salvarConfigImpressao()">Salvar conexão remota</button>
-        <button class="btn-gray" onclick="testarConfigImpressao()">Testar conexão</button>
-      </div>
-      <div id="printConfigStatus" class="impressao-remota-status"></div>
-    </div>
-
-    <div class="card">
       <h2>Usuários do sistema</h2>
       <p class="small">Cadastre, altere ou exclua usuários. Marque DEV apenas para quem pode acessar esta área.</p>
 
@@ -776,107 +746,14 @@
     </div>
   </section>
 
-
-<section id="inventarioQr" class="screen" style="display:none;">
-  <div class="topbar">
-    <button class="back-btn" onclick="abrirTela('dashboard')">←</button>
-    <h2>📦 Conferência de inventário</h2>
-  </div>
-
-  <div class="card">
-    <h3>Inventário por QR Code</h3>
-    <p class="muted">Conferência exclusiva do modo desenvolvedor. O estoque não é alterado durante a conferência.</p>
-
-    <div class="quick-grid" style="margin-top:12px;">
-      <div class="quick-card">
-        <strong id="invTotalPecas">0</strong>
-        <span>Peças no sistema</span>
-      </div>
-      <div class="quick-card">
-        <strong id="invConferidas">0</strong>
-        <span>Conferidas</span>
-      </div>
-      <div class="quick-card">
-        <strong id="invDivergencias">0</strong>
-        <span>Divergências</span>
-      </div>
-      <div class="quick-card">
-        <strong id="invNaoConferidas">0</strong>
-        <span>Não conferidas</span>
-      </div>
-    </div>
-
-    <div style="margin-top:16px;">
-      <div class="progress-track">
-        <div id="invProgressoBar" class="progress-fill" style="width:0%"></div>
-      </div>
-      <div id="invProgressoTexto" class="muted" style="margin-top:6px;">0 / 0 peças</div>
-    </div>
-
-    <div class="form-group" style="margin-top:18px;">
-      <label>📷 Código QR / código da peça</label>
-      <input id="invCodigo" type="text" inputmode="numeric" maxlength="5"
-             placeholder="Escaneie ou digite o código"
-             oninput="this.value=this.value.replace(/\D/g,'').slice(0,5)">
-      <button class="btn-primary" onclick="conferirInventarioCodigo()" style="margin-top:8px;">
-        🔎 Conferir peça
-      </button>
-    </div>
-
-    <div id="invPecaAtual" style="display:none;margin-top:16px;" class="card">
-      <h3 id="invNomePeca">Peça</h3>
-      <div class="muted">Código: <strong id="invCodigoPeca">00000</strong></div>
-      <div class="muted">Estoque no sistema: <strong id="invEstoqueSistema">0</strong></div>
-
-      <div class="form-group" style="margin-top:12px;">
-        <label>Quantidade encontrada fisicamente</label>
-        <input id="invQuantidade" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
-      </div>
-
-      <div id="invResultadoAtual" class="muted" style="margin:8px 0;"></div>
-
-      <button class="btn-primary" onclick="confirmarConferenciaInventario()">
-        ✓ Confirmar conferência
-      </button>
-    </div>
-
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
-      <button class="btn-secondary" onclick="limparConferenciaInventario()">🧹 Nova conferência</button>
-      <button class="btn-secondary" onclick="mostrarDivergenciasInventario()">⚠️ Ver divergências</button>
-      <button class="btn-danger" onclick="finalizarInventarioDev()">🔐 Finalizar inventário</button>
-    </div>
-
-    <div id="invDivergenciasLista" style="margin-top:16px;"></div>
-  </div>
-</section>
-
 </main>
 
-<div
-<div class="form-group" style="margin-top:10px;">
-  <label for="baixaCidade">📍 Cidade da baixa</label>
-  <select id="baixaCidade">
-    <option value="">Selecione a cidade</option>
-    <option value="Cesário Lange">Cesário Lange</option>
-    <option value="Quadra">Quadra</option>
-  </select>
-</div>
- id="modalEditarPeca" class="modal-bg"><div class="modal"><h2>Alterar peça</h2><p id="infoEditarPeca"></p><input id="editarPecaNome" placeholder="Nome da peça"><input id="editarPecaValor" type="number" min="0" step="0.01" placeholder="Valor da peça R$"><button class="btn-green" onclick="confirmarEdicaoPeca()">Salvar alterações</button><button class="btn-gray" onclick="fecharModal('modalEditarPeca')">Cancelar</button></div></div>
+<div id="modalEditarPeca" class="modal-bg"><div class="modal"><h2>Alterar peça</h2><p id="infoEditarPeca"></p><input id="editarPecaNome" placeholder="Nome da peça"><input id="editarPecaValor" type="number" min="0" step="0.01" placeholder="Valor da peça R$"><button class="btn-green" onclick="confirmarEdicaoPeca()">Salvar alterações</button><button class="btn-gray" onclick="fecharModal('modalEditarPeca')">Cancelar</button></div></div>
 <div id="modalBaixa" class="modal-bg"><div class="modal"><h2>Baixar peça / venda</h2><p id="infoBaixa"></p><input id="baixaQtd" type="number" min="1" placeholder="Quantidade"><select id="baixaResp"><option value="">Quem fez a baixa?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><div style="display:flex;align-items:center;gap:8px;margin:6px 0;"><input id="baixaSemOs" type="checkbox" style="width:auto;margin:0;" onchange="alternarCampoOS()"> <label for="baixaSemOs" style="font-weight:bold;">NÃO INFORMAR OS</label></div><input id="baixaOS" type="text" inputmode="numeric" placeholder="Número da OS (opcional se marcado)"><textarea id="baixaObs" placeholder="Observação. Ex: cliente, aparelho"></textarea><button class="btn-green" onclick="confirmarBaixa()">Confirmar</button><button class="btn-gray" onclick="fecharModal('modalBaixa')">Cancelar</button></div></div>
 <div id="modalReposicao" class="modal-bg"><div class="modal"><h2>Repor estoque</h2><p id="infoReposicao"></p><input id="reporEditPeca" placeholder="Nome da peça"><input id="reporEditValor" type="number" min="0" step="0.01" placeholder="Valor da peça R$"><input id="reporQtd" type="number" min="1" placeholder="Quantidade reposta"><select id="reporResp"><option value="">Quem fez a reposição?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><textarea id="reporObs" placeholder="Observação"></textarea><button class="btn-green" onclick="confirmarReposicao()">Confirmar</button><button class="btn-gray" onclick="fecharModal('modalReposicao')">Cancelar</button></div></div>
 <div id="modalGarantia" class="modal-bg"><div class="modal"><h2>Novo pedido de garantia</h2><p id="infoGarantia"></p><select id="garantiaResp"><option value="">Quem informou a garantia?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><select id="garantiaMotivo"><option>DEFEITO NA PEÇA</option><option>TOUCH NÃO FUNCIONA</option><option>DISPLAY SEM IMAGEM</option><option>PEÇA QUEBRADA</option><option>OUTRO</option></select><textarea id="garantiaInfo" placeholder="Informações relevantes"></textarea><button class="btn-purple" onclick="confirmarGarantia()">Abrir pedido e imprimir ticket</button><button class="btn-gray" onclick="fecharModal('modalGarantia')">Cancelar</button></div></div>
 <div id="modalStatusGarantia" class="modal-bg"><div class="modal"><h2>Atualizar garantia</h2><p id="infoStatusGarantia"></p><select id="novoStatusGarantia"><option>AGUARDANDO</option><option>ANÁLISE DE FORNECEDOR</option><option>GARANTIA APROVADA</option><option>GARANTIA NEGADA</option></select><select id="respStatusGarantia"><option value="">Quem atualizou?</option><option>GUILHERME</option><option>DARCISIO</option><option>JESSE</option></select><textarea id="obsStatusGarantia" placeholder="Observação"></textarea><button class="btn-green" onclick="confirmarStatusGarantia()">Salvar</button><button class="btn-gray" onclick="fecharModal('modalStatusGarantia')">Cancelar</button></div></div>
 
-
-<div id="modalEscolhaImpressao" class="modal-bg">
-  <div class="modal">
-    <h2>Como deseja imprimir?</h2>
-    <p class="small">Escolha onde as etiquetas selecionadas serão impressas.</p>
-    <button class="btn-green" onclick="escolherImpressaoLocal()">🖨️ Impressão local</button>
-    <button class="btn-purple" onclick="escolherImpressaoRemota()">☁️ Impressão remota — assistência</button>
-    <button class="btn-gray" onclick="fecharModal('modalEscolhaImpressao')">Cancelar</button>
-  </div>
-</div>
 
 <div id="scannerCampoModal" class="modal-bg">
   <div class="modal">
@@ -1120,12 +997,10 @@ function atualizarTelaAtual() {
       atualizarProgressoCadastro();
     }
   }
-  if(tela==="desenvolvedor") { carregarUsuariosDev(); renderizarProdutosDev(); carregarOpcoesEspeciais(); atualizarDescricaoEspecial(); carregarConfigImpressao(); }
-  if(tela==="etiquetas") { carregarConfigImpressao(); renderizarBuscaEtiqueta(); }
+  if(tela==="desenvolvedor") { carregarUsuariosDev(); renderizarProdutosDev(); carregarOpcoesEspeciais(); atualizarDescricaoEspecial(); }
 }
 
 function abrirTela(tela) {
-  if(tela==="inventarioQr"){ abrirInventarioQrDev(); return; }
   if (tela === "desenvolvedor" && !usuarioAtual?.dev) return exigirDev();
   document.querySelectorAll("main > section").forEach(sec=>sec.classList.add("hidden"));
   document.getElementById(tela).classList.remove("hidden");
@@ -1184,7 +1059,7 @@ async function cadastrarPeca() {
   const peca = document.getElementById("cadPeca").value.trim().toUpperCase();
   const qtd = Number(document.getElementById("cadQtd").value);
   const valor = lerMoedaCampo(document.getElementById("cadValor"));
-  if(!/^\d{5}$/.test(codigo) || !peca || qtd<0 || Number.isNaN(qtd) || valor<0 || Number.isNaN(valor)) return alert("O código deve ter exatamente 5 dígitos e os demais campos devem estar preenchidos corretamente.");
+  if(!/^\\d{5}$/.test(codigo) || !peca || qtd<0 || Number.isNaN(qtd) || valor<0 || Number.isNaN(valor)) return alert("O código deve ter exatamente 5 dígitos e os demais campos devem estar preenchidos corretamente.");
   const existente = estoque.find(p=>p.codigo===codigo);
   const situacao = qtd>0 ? "ESTOQUE OK" : "ESTOQUE ZERADO";
   const qtdAnterior = existente ? existente.qtd : 0;
@@ -1236,7 +1111,6 @@ function buscarParaBaixa() {
 }
 
 function abrirModalBaixa(codigo) {
-  limparCidadeBaixaDM();
   codigoSelecionado=codigo; const item=estoque.find(p=>p.codigo===codigo);
   if (!item) return alert("Peça não encontrada.");
   document.getElementById("infoBaixa").innerText=`${item.codigo} - ${item.peca} | Estoque: ${item.qtd} | Valor: ${dinheiro(item.valor)}`;
@@ -1258,13 +1132,6 @@ function alternarCampoOS() {
 }
 
 async function confirmarBaixa() {
-  const cidadeBaixa = document.getElementById("baixaCidade")?.value || "";
-  if (!cidadeBaixa) {
-    alert("Selecione a cidade da baixa: Quadra ou Cesário Lange.");
-    document.getElementById("baixaCidade")?.focus();
-    return;
-  }
-
   const item=estoque.find(p=>p.codigo===codigoSelecionado);
   const qtdMov=Number(document.getElementById("baixaQtd").value);
   const responsavel=document.getElementById("baixaResp").value;
@@ -1290,7 +1157,7 @@ async function confirmarBaixa() {
   try {
     await inserirMovimentacao({
       tipo:"VENDA", garantiaStatus:"SEM GARANTIA", responsavel,codigo:item.codigo,peca:item.peca,acao:"USAR",
-      qtdMov,qtdAnterior,novaQtd,valorUnit:item.valor,valorTotal:item.valor*qtdMov,observacao:`${observacaoFinal || ""}${cidadeBaixa ? " | Cidade: " + cidadeBaixa : ""}`
+      qtdMov,qtdAnterior,novaQtd,valorUnit:item.valor,valorTotal:item.valor*qtdMov,observacao:observacaoFinal
     });
   } catch (err) {
     alert("A baixa foi alterada no estoque, mas não foi possível registrar a movimentação: " + (err.message || err));
@@ -1579,280 +1446,6 @@ async function confirmarReposicao() {
 
 
 
-
-const PRINT_CONFIG_KEY = "estoqueDM_print_config";
-const PRINT_PROXY_PADRAO = `${SUPABASE_URL}/functions/v1/imprimir-etiquetas`;
-
-function obterConfigImpressao() {
-  try {
-    const cfg = JSON.parse(localStorage.getItem(PRINT_CONFIG_KEY) || "{}");
-    return {
-      proxyUrl: String(cfg.proxyUrl || PRINT_PROXY_PADRAO).trim()
-    };
-  } catch {
-    return { proxyUrl: PRINT_PROXY_PADRAO };
-  }
-}
-
-function carregarConfigImpressao() {
-  const cfg = obterConfigImpressao();
-  const url = document.getElementById("printProxyUrl");
-  if (url) url.value = cfg.proxyUrl;
-  atualizarStatusImpressao();
-}
-
-function salvarConfigImpressao() {
-  if (!exigirDev()) return;
-  const proxyUrl = String(document.getElementById("printProxyUrl")?.value || PRINT_PROXY_PADRAO).trim();
-  if (!proxyUrl) {
-    alert("Informe a URL da função segura de impressão.");
-    return;
-  }
-  try {
-    new URL(proxyUrl);
-  } catch {
-    alert("A URL da impressão não é válida.");
-    return;
-  }
-  localStorage.setItem(PRINT_CONFIG_KEY, JSON.stringify({ proxyUrl }));
-  atualizarStatusImpressao();
-  aviso("Conexão remota salva");
-}
-
-function atualizarStatusImpressao() {
-  const cfg = obterConfigImpressao();
-  const boxes = [document.getElementById("impressaoRemotaStatus"), document.getElementById("printConfigStatus")].filter(Boolean);
-  boxes.forEach(box => {
-    if (!cfg.proxyUrl) {
-      box.className = "impressao-remota-status warn";
-      box.innerHTML = "⚠️ Impressão remota não configurada. A impressão local continua funcionando.";
-    } else {
-      box.className = "impressao-remota-status ok";
-      box.innerHTML = "☁️ Impressão remota pronta para a assistência. A impressora padrão é definida no servidor.";
-    }
-  });
-}
-
-async function testarConfigImpressao() {
-  if (!exigirDev()) return;
-  const cfg = obterConfigImpressao();
-  if (!cfg.proxyUrl) {
-    alert("Salve primeiro a URL da função segura.");
-    return;
-  }
-  const box = document.getElementById("printConfigStatus");
-  if (box) box.innerHTML = "⏳ Testando conexão...";
-  try {
-    const resp = await fetch(cfg.proxyUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "ping" })
-    });
-    const texto = await resp.text();
-    if (!resp.ok) throw new Error(texto || `HTTP ${resp.status}`);
-    if (box) {
-      box.className = "impressao-remota-status ok";
-      box.innerHTML = "✅ Função de impressão respondeu corretamente.";
-    }
-  } catch (e) {
-    if (box) {
-      box.className = "impressao-remota-status warn";
-      box.innerHTML = "❌ Não foi possível testar: " + (e.message || e);
-    }
-  }
-}
-
-function abrirEscolhaImpressao() {
-  if (!totalEtiquetasSelecionadas()) {
-    aviso("Selecione pelo menos uma etiqueta");
-    return;
-  }
-  const modal = document.getElementById("modalEscolhaImpressao");
-  if (modal) modal.style.display = "flex";
-}
-
-function escolherImpressaoLocal() {
-  fecharModal("modalEscolhaImpressao");
-  setTimeout(() => imprimirEtiquetasLocal(), 80);
-}
-
-function escolherImpressaoRemota() {
-  fecharModal("modalEscolhaImpressao");
-  setTimeout(() => imprimirEtiquetasRemotas(), 80);
-}
-
-function textoPdfSeguro(valor) {
-  return String(valor ?? "")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-}
-
-function bytesBase64(bytes) {
-  let bin = "";
-  const bloco = 0x8000;
-  for (let i = 0; i < bytes.length; i += bloco) {
-    bin += String.fromCharCode(...bytes.subarray(i, i + bloco));
-  }
-  return btoa(bin);
-}
-
-async function canvasQrJpeg(codigo) {
-  if (!window.QRCode || !QRCode.toCanvas) throw new Error("Biblioteca de QR Code não carregou.");
-  const canvas = document.createElement("canvas");
-  await QRCode.toCanvas(canvas, String(codigo), {
-    width: 220,
-    margin: 0,
-    errorCorrectionLevel: "M"
-  });
-  const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-  const bin = atob(dataUrl.split(",")[1]);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return { bytes, width: canvas.width, height: canvas.height };
-}
-
-function montarPdfEtiquetas(paginas) {
-  const objetos = [];
-  const adicionar = conteudo => { objetos.push(conteudo); return objetos.length; };
-  const catalogo = adicionar(null);
-  const paginasObj = adicionar(null);
-  const fonte = adicionar("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-  const pageRefs = [];
-
-  for (const pagina of paginas) {
-    const imagemObj = adicionar({ jpeg: pagina.qr.bytes, width: pagina.qr.width, height: pagina.qr.height });
-    const stream = [
-      "q",
-      "0 0 113.3858 113.3858 re W n",
-      `BT /F1 8 Tf 8 101 Td (${textoPdfSeguro(pagina.peca)}) Tj ET`,
-      `q 35 0 0 35 39.19 54 cm /Im${imagemObj} Do Q`,
-      `BT /F1 16 Tf 0 0 Td (${textoPdfSeguro(pagina.valor)}) Tj ET`,
-      `BT /F1 6 Tf 20 14 Td (ESTOQUE DM CELULAR) Tj ET`,
-      `BT /F1 6 Tf 44 6 Td (COD: ${textoPdfSeguro(pagina.codigo)}) Tj ET`,
-      "Q"
-    ].join("\n");
-    const conteudoObj = adicionar(stream);
-    const pageObj = adicionar(null);
-    pageRefs.push({ pageObj, conteudoObj, imagemObj });
-  }
-
-  // Preenche páginas depois que todos os objetos existem.
-  const kids = pageRefs.map(p => `${p.pageObj} 0 R`).join(" ");
-  objetos[ paginasObj - 1 ] = `<< /Type /Pages /Kids [${kids}] /Count ${pageRefs.length} >>`;
-  objetos[ catalogo - 1 ] = `<< /Type /Catalog /Pages ${paginasObj} 0 R >>`;
-
-  pageRefs.forEach((p, idx) => {
-    objetos[p.pageObj - 1] = `<< /Type /Page /Parent ${paginasObj} 0 R /MediaBox [0 0 113.3858 113.3858] /Resources << /Font << /F1 ${fonte} 0 R >> /XObject << /Im${p.imagemObj} ${p.imagemObj} 0 R >> >> /Contents ${p.conteudoObj} 0 R >>`;
-  });
-
-  const partes = [];
-  const offsets = [0];
-  const pushText = txt => { const b = new TextEncoder().encode(txt); partes.push(b); return b.length; };
-  let pos = pushText("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
-
-  for (let i = 0; i < objetos.length; i++) {
-    offsets[i + 1] = pos;
-    const obj = objetos[i];
-    if (obj && obj.jpeg) {
-      pos += pushText(`${i + 1} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${obj.width} /Height ${obj.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${obj.jpeg.length} >>\nstream\n`);
-      partes.push(obj.jpeg); pos += obj.jpeg.length;
-      pos += pushText("\nendstream\nendobj\n");
-    } else {
-      const conteudo = String(obj ?? "");
-      if (i >= 0 && pageRefs.some(p => p.conteudoObj === i + 1)) {
-        const b = new TextEncoder().encode(conteudo);
-        pos += pushText(`${i + 1} 0 obj\n<< /Length ${b.length} >>\nstream\n`);
-        partes.push(b); pos += b.length;
-        pos += pushText("\nendstream\nendobj\n");
-      } else {
-        pos += pushText(`${i + 1} 0 obj\n${conteudo}\nendobj\n`);
-      }
-    }
-  }
-
-  const xrefPos = pos;
-  pos += pushText(`xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`);
-  for (let i = 1; i <= objetos.length; i++) {
-    pos += pushText(String(offsets[i]).padStart(10, "0") + " 00000 n \n");
-  }
-  pushText(`trailer\n<< /Size ${objetos.length + 1} /Root ${catalogo} 0 R >>\nstartxref\n${xrefPos}\n%%EOF`);
-
-  const total = partes.reduce((n, b) => n + b.length, 0);
-  const pdf = new Uint8Array(total);
-  let cursor = 0;
-  partes.forEach(b => { pdf.set(b, cursor); cursor += b.length; });
-  return pdf;
-}
-
-async function gerarPdfEtiquetasSelecionadas() {
-  const paginas = [];
-  for (const [codigo, qtd] of Object.entries(etiquetasSelecionadas)) {
-    const item = estoque.find(p => p.codigo === codigo);
-    if (!item) continue;
-    const qr = await canvasQrJpeg(item.codigo);
-    for (let i = 0; i < qtd; i++) {
-      paginas.push({
-        codigo: item.codigo,
-        peca: item.peca,
-        valor: dinheiro(item.valor),
-        qr
-      });
-    }
-  }
-  if (!paginas.length) throw new Error("Nenhuma etiqueta válida foi encontrada.");
-  return montarPdfEtiquetas(paginas);
-}
-
-async function imprimirEtiquetasRemotas() {
-  const total = totalEtiquetasSelecionadas();
-  if (!total) {
-    aviso("Selecione pelo menos uma etiqueta");
-    return;
-  }
-  const cfg = obterConfigImpressao();
-  if (!cfg.proxyUrl) {
-    alert("A impressão remota ainda não foi configurada. Entre no modo DEV e configure a conexão.");
-    if (usuarioAtual?.dev) abrirTela("desenvolvedor");
-    return;
-  }
-
-  const box = document.getElementById("impressaoRemotaStatus");
-  if (box) {
-    box.className = "impressao-remota-status";
-    box.innerHTML = "⏳ Gerando PDF 40x40 mm e enviando para a impressora da loja...";
-  }
-
-  try {
-    const pdf = await gerarPdfEtiquetasSelecionadas();
-    const content = bytesBase64(pdf);
-    const resp = await fetch(cfg.proxyUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "print",
-        title: `Etiquetas DM - ${new Date().toLocaleString("pt-BR")}`,
-        contentType: "pdf_base64",
-        content,
-        source: "Estoque DM",
-        options: { copies: 1 }
-      })
-    });
-    const texto = await resp.text();
-    if (!resp.ok) throw new Error(texto || `HTTP ${resp.status}`);
-    if (box) {
-      box.className = "impressao-remota-status ok";
-      box.innerHTML = `✅ ${total} etiqueta(s) enviada(s) para a impressora padrão.`;
-    }
-    aviso("Etiquetas enviadas para impressão");
-  } catch (e) {
-    if (box) {
-      box.className = "impressao-remota-status warn";
-      box.innerHTML = "❌ Falha na impressão remota: " + (e.message || e);
-    }
-    alert("Não foi possível enviar as etiquetas para a impressora. A impressão pelo navegador continua disponível.\n\n" + (e.message || e));
-  }
-}
-
 let etiquetaSelecionadaCodigo = null;
 let etiquetasSelecionadas = {};
 
@@ -1983,11 +1576,7 @@ function renderizarBuscaEtiqueta() {
   renderizarResumoEtiquetas();
 }
 
-function imprimirEtiquetasSelecionadas() {
-  abrirEscolhaImpressao();
-}
-
-async function imprimirEtiquetasLocal() {
+async function imprimirEtiquetasSelecionadas() {
   const total = totalEtiquetasSelecionadas();
   if (!total) {
     aviso("Selecione pelo menos uma etiqueta");
@@ -2527,8 +2116,6 @@ function renderizarUsuariosDev() {
       Permissão: ${u.dev ? "DESENVOLVEDOR" : "NORMAL"}<br>
       Status: ${u.ativo === false ? "INATIVO" : "ATIVO"}
       <button onclick="editarUsuarioDev('${u.id}')">Alterar</button>
-<button id="menuInventarioDev" class="menu-item" type="button" onclick="abrirInventarioQrDev(); fecharMenu();" style="display:none;">📦 Conferir estoque</button>
-
       <button class="btn-red" onclick="excluirUsuarioDev('${u.id}')">Excluir</button>
     `;
     div.appendChild(card);
@@ -2722,265 +2309,6 @@ async function zerarTodoEstoque() {
 
 iniciarLogin();
 carregarTudo();
-
-// ==================== INVENTÁRIO POR QR — DEV ONLY ====================
-let inventarioDev = {
-  iniciado: false,
-  pecas: [],
-  conferidas: {},
-  atual: null
-};
-
-function iniciarConferenciaInventario() {
-  inventarioDev.iniciado = true;
-  inventarioDev.conferidas = {};
-  inventarioDev.atual = null;
-  inventarioDev.pecas = Array.isArray(window.pecas) ? window.pecas.filter(Boolean) : [];
-  atualizarResumoInventario();
-}
-
-function dadosPecasInventario() {
-  if (Array.isArray(window.pecas)) return window.pecas.filter(Boolean);
-  if (Array.isArray(window.listaPecas)) return window.listaPecas.filter(Boolean);
-  return [];
-}
-
-function abrirInventarioQrDev() {
-  // Proteção adicional: só DEV pode usar esta ferramenta.
-  const ehDev = (typeof usuarioAtual !== "undefined" && usuarioAtual &&
-                 (usuarioAtual.tipo === "DEV" || usuarioAtual.perfil === "DEV" ||
-                  usuarioAtual.role === "DEV" || usuarioAtual.is_dev === true));
-  if (!ehDev) {
-    alert("A conferência de inventário está disponível somente no modo desenvolvedor.");
-    return;
-  }
-  iniciarConferenciaInventario();
-  abrirTela('inventarioQr');
-}
-
-function encontrarPecaInventario(codigo) {
-  const lista = dadosPecasInventario();
-  return lista.find(p => String(p.codigo ?? "").padStart(5,"0") === String(codigo).padStart(5,"0"));
-}
-
-function conferirInventarioCodigo() {
-  const campo = document.getElementById("invCodigo");
-  const codigo = String(campo?.value || "").trim();
-  if (!/^\d{5}$/.test(codigo)) {
-    alert("Informe ou escaneie um código de exatamente 5 dígitos.");
-    return;
-  }
-
-  const peca = encontrarPecaInventario(codigo);
-  if (!peca) {
-    alert("Peça não encontrada no estoque.");
-    return;
-  }
-
-  inventarioDev.atual = peca;
-  document.getElementById("invPecaAtual").style.display = "block";
-  document.getElementById("invNomePeca").textContent = peca.peca || peca.nome || peca.descricao || "Peça";
-  document.getElementById("invCodigoPeca").textContent = String(peca.codigo).padStart(5,"0");
-  document.getElementById("invEstoqueSistema").textContent = Number(peca.quantidade ?? peca.qtd ?? peca.estoque ?? 0);
-  document.getElementById("invQuantidade").value =
-    inventarioDev.conferidas[codigo]?.fisico ?? "";
-  document.getElementById("invResultadoAtual").textContent = "";
-  document.getElementById("invQuantidade").focus();
-}
-
-function atualizarResultadoInventarioAtual() {
-  const p = inventarioDev.atual;
-  const q = Number(document.getElementById("invQuantidade")?.value);
-  const el = document.getElementById("invResultadoAtual");
-  if (!p || !Number.isFinite(q) || q < 0) {
-    if (el) el.textContent = "";
-    return;
-  }
-  const sistema = Number(p.quantidade ?? p.qtd ?? p.estoque ?? 0);
-  const dif = q - sistema;
-  if (dif === 0) {
-    el.className = "inventory-ok";
-    el.textContent = "🟢 Sem divergência — quantidade confere.";
-  } else if (dif < 0) {
-    el.className = "inventory-bad";
-    el.textContent = `🔴 Faltando ${Math.abs(dif)} unidade(s). Diferença: ${dif}.`;
-  } else {
-    el.className = "inventory-warn";
-    el.textContent = `🟠 Sobrando ${dif} unidade(s). Diferença: +${dif}.`;
-  }
-}
-
-function confirmarConferenciaInventario() {
-  const p = inventarioDev.atual;
-  const campo = document.getElementById("invQuantidade");
-  const q = Number(campo?.value);
-  if (!p || !Number.isInteger(q) || q < 0) {
-    alert("Informe uma quantidade física válida.");
-    return;
-  }
-
-  const codigo = String(p.codigo).padStart(5,"0");
-  const sistema = Number(p.quantidade ?? p.qtd ?? p.estoque ?? 0);
-  inventarioDev.conferidas[codigo] = {
-    codigo,
-    peca: p.peca || p.nome || p.descricao || "Peça",
-    sistema,
-    fisico: q,
-    diferenca: q - sistema,
-    data: new Date().toISOString()
-  };
-
-  atualizarResumoInventario();
-  document.getElementById("invPecaAtual").style.display = "none";
-  document.getElementById("invCodigo").value = "";
-  document.getElementById("invQuantidade").value = "";
-  document.getElementById("invCodigo").focus();
-}
-
-function atualizarResumoInventario() {
-  const pecas = dadosPecasInventario();
-  inventarioDev.pecas = pecas;
-  const total = pecas.length;
-  const conferidas = Object.keys(inventarioDev.conferidas).length;
-  const divergencias = Object.values(inventarioDev.conferidas).filter(x => x.diferenca !== 0).length;
-  const nao = Math.max(0, total - conferidas);
-  const pct = total ? Math.min(100, (conferidas / total) * 100) : 0;
-
-  const set = (id,v) => { const e=document.getElementById(id); if(e)e.textContent=v; };
-  set("invTotalPecas", total);
-  set("invConferidas", conferidas);
-  set("invDivergencias", divergencias);
-  set("invNaoConferidas", nao);
-  set("invProgressoTexto", `${conferidas} / ${total} peças`);
-  const bar = document.getElementById("invProgressoBar");
-  if (bar) bar.style.width = pct + "%";
-}
-
-function mostrarDivergenciasInventario() {
-  const lista = Object.values(inventarioDev.conferidas).filter(x => x.diferenca !== 0);
-  const el = document.getElementById("invDivergenciasLista");
-  if (!el) return;
-  if (!lista.length) {
-    el.innerHTML = '<div class="inventory-ok">🟢 Nenhuma divergência nas peças conferidas.</div>';
-    return;
-  }
-  el.innerHTML = `
-    <h3>⚠️ Divergências</h3>
-    ${lista.map(x => `
-      <div class="inv-divergencia">
-        <strong>${x.codigo} — ${x.peca}</strong><br>
-        Sistema: ${x.sistema} · Físico: ${x.fisico}<br>
-        Diferença: <strong>${x.diferenca > 0 ? "+" : ""}${x.diferenca}</strong>
-      </div>
-    `).join("")}
-  `;
-}
-
-function limparConferenciaInventario() {
-  if (!confirm("Começar uma nova conferência? Os resultados desta conferência serão apagados desta tela.")) return;
-  iniciarConferenciaInventario();
-  const ids=["invCodigo","invQuantidade"];
-  ids.forEach(id=>{const e=document.getElementById(id);if(e)e.value=""});
-  const box=document.getElementById("invPecaAtual"); if(box)box.style.display="none";
-  const div=document.getElementById("invDivergenciasLista"); if(div)div.innerHTML="";
-}
-
-function finalizarInventarioDev() {
-  const total = inventarioDev.pecas.length;
-  const conferidas = Object.keys(inventarioDev.conferidas).length;
-  const divergencias = Object.values(inventarioDev.conferidas).filter(x => x.diferenca !== 0).length;
-  if (!confirm(`Finalizar esta conferência?\n\nConferidas: ${conferidas}/${total}\nDivergências: ${divergencias}\n\nO estoque NÃO será alterado automaticamente.`)) return;
-
-  // Preserva o resultado em memória para revisão nesta sessão.
-  inventarioDev.iniciado = false;
-  alert("Inventário finalizado para conferência. Nenhum estoque foi alterado.");
-  mostrarDivergenciasInventario();
-}
-
-document.addEventListener("input", function(e) {
-  if (e.target && e.target.id === "invQuantidade") atualizarResultadoInventarioAtual();
-});
-
-
-function atualizarMenuDevOnly() {
-  const ehDev = (typeof usuarioAtual !== "undefined" && usuarioAtual &&
-                 (usuarioAtual.tipo === "DEV" || usuarioAtual.perfil === "DEV" ||
-                  usuarioAtual.role === "DEV" || usuarioAtual.is_dev === true));
-  document.querySelectorAll(".dev-only").forEach(el => {
-    el.style.display = ehDev ? "" : "none";
-  });
-}
-document.addEventListener("DOMContentLoaded", atualizarMenuDevOnly);
-
-
-function ehModoDesenvolvedorDM() {
-  try {
-    const u = (typeof usuarioAtual !== "undefined") ? usuarioAtual : null;
-    return !!u && (
-      u.tipo === "DEV" || u.tipo === "dev" ||
-      u.perfil === "DEV" || u.perfil === "dev" ||
-      u.role === "DEV" || u.role === "dev" ||
-      u.is_dev === true || u.isDev === true ||
-      String(u.nome || u.usuario || "").toUpperCase() === "DESENVOLVEDOR"
-    );
-  } catch (_) { return false; }
-}
-function atualizarMenuInventarioDev() {
-  const el = document.getElementById("menuInventarioDev");
-  if (el) el.style.display = ehModoDesenvolvedorDM() ? "flex" : "none";
-}
-function abrirInventarioQrDev() {
-  if (!ehModoDesenvolvedorDM()) {
-    alert("A conferência de estoque está disponível somente no modo desenvolvedor.");
-    return;
-  }
-  iniciarConferenciaInventario();
-  abrirTela("inventarioQr");
-}
-document.addEventListener("DOMContentLoaded", () => {
-  atualizarMenuInventarioDev();
-  setTimeout(atualizarMenuInventarioDev, 500);
-  setTimeout(atualizarMenuInventarioDev, 1500);
-});
-setInterval(atualizarMenuInventarioDev, 1500);
-
-
-function loginEnterHandlerDM(event) {
-  if (event.key !== "Enter") return;
-  const alvo = event.target;
-  const telaLogin = document.getElementById("login") ||
-                    document.getElementById("telaLogin") ||
-                    document.querySelector('[id*="login" i]');
-  const dentroLogin = telaLogin ? telaLogin.contains(alvo) : false;
-  const tipo = String(alvo?.type || "").toLowerCase();
-  const nome = String(alvo?.id || "") + " " + String(alvo?.name || "");
-  const pareceLogin = /senha|password|usuario|login|email/i.test(nome) || tipo === "password";
-  if (!dentroLogin && !pareceLogin) return;
-
-  event.preventDefault();
-
-  // Use the existing virtual login button/function so authentication remains unchanged.
-  const botao = document.querySelector(
-    '#login button[type="submit"], #telaLogin button[type="submit"], ' +
-    '#login button, #telaLogin button, button[onclick*="login" i], button[onclick*="entrar" i]'
-  );
-  if (botao && !botao.disabled) {
-    botao.click();
-    return;
-  }
-
-  // Fallback: submit the nearest form if the existing login is a form.
-  const form = alvo?.closest?.("form");
-  if (form) form.requestSubmit ? form.requestSubmit() : form.submit();
-}
-document.addEventListener("keydown", loginEnterHandlerDM, true);
-
-
-function limparCidadeBaixaDM() {
-  const e = document.getElementById("baixaCidade");
-  if (e) e.value = "";
-}
-
 </script>
 </body>
 </html>
