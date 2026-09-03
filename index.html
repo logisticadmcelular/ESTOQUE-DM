@@ -1059,7 +1059,7 @@ async function cadastrarPeca() {
   const peca = document.getElementById("cadPeca").value.trim().toUpperCase();
   const qtd = Number(document.getElementById("cadQtd").value);
   const valor = lerMoedaCampo(document.getElementById("cadValor"));
-  if(!/^\\d{5}$/.test(codigo) || !peca || qtd<0 || Number.isNaN(qtd) || valor<0 || Number.isNaN(valor)) return alert("O código deve ter exatamente 5 dígitos e os demais campos devem estar preenchidos corretamente.");
+  if(!/^\d{5}$/.test(codigo) || !peca || qtd<0 || Number.isNaN(qtd) || valor<0 || Number.isNaN(valor)) return alert("O código deve ter exatamente 5 dígitos e os demais campos devem estar preenchidos corretamente.");
   const existente = estoque.find(p=>p.codigo===codigo);
   const situacao = qtd>0 ? "ESTOQUE OK" : "ESTOQUE ZERADO";
   const qtdAnterior = existente ? existente.qtd : 0;
