@@ -365,6 +365,35 @@
       td::before { content: attr(data-label); font-weight:bold; display:block; color:#374151; }
     }
   </style>
+
+<style>
+.inv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.inv-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
+.inv-stats .stat{background:#f3f5f8;border-radius:10px;padding:12px;min-width:0}
+.inv-stats .stat span{display:block;font-size:12px;color:#5b6470}
+.inv-stats .stat strong{display:block;font-size:20px;margin-top:4px}
+.inv-tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin:12px 0}
+.inv-tools input,.inv-tools select{min-width:0;width:100%;box-sizing:border-box}
+.inv-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.inv-brand-title{position:sticky;top:0;z-index:1;background:#eaf0ff;border-left:5px solid #245bd7;padding:10px 12px;border-radius:8px;margin:18px 0 8px;font-weight:800}
+.inv-row{display:grid;grid-template-columns:90px minmax(180px,2fr) minmax(110px,.7fr) minmax(100px,.6fr);gap:8px;align-items:center;padding:10px;border:1px solid #e1e5eb;border-radius:10px;margin:6px 0;background:#fff}
+.inv-row label{font-size:11px;color:#606975;display:block}
+.inv-row input{width:100%;min-width:0;box-sizing:border-box;margin-top:3px;padding:9px;border:1px solid #cbd2dc;border-radius:7px}
+.inv-row .inv-code{font-weight:700;color:#245bd7;overflow-wrap:anywhere}
+.inv-row.inv-dirty{border:2px solid #e6a23c;background:#fffaf0}
+.inv-row .inv-desc{font-weight:600}
+.inv-dirty-badge{font-size:10px;color:#8a5200;font-weight:700}
+@media(max-width:700px){
+ .inv-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .inv-tools{grid-template-columns:1fr}
+ .inv-row{grid-template-columns:70px minmax(0,1fr) minmax(88px,.6fr);gap:6px;padding:8px}
+ .inv-row .inv-desc-cell{grid-column:2 / 4}
+ .inv-row .inv-code-cell{grid-row:1 / 3;align-self:center}
+ .inv-row input{padding:8px;font-size:14px}
+ .inv-head button{width:100%}
+}
+</style>
+
 </head>
 <body>
 
@@ -646,7 +675,17 @@
       <input id="pesquisa" placeholder="Digite código ou nome da peça" oninput="renderizarEstoque()">
       <button class="camera-btn" onclick="abrirScannerParaCampo('pesquisa','renderizarEstoque', false)" title="Ler QR Code">📷</button>
     </div></div>
-    <div class="card"><h2>Estoque</h2><table><thead><tr><th>Código</th><th>QTD</th><th>Peça</th><th>Valor</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="tabelaEstoque"></tbody></table></div>
+    <div class="card"><h2>Peças zeradas</h2>
+      <p class="small">Use o ícone de ocultar para retirar da lista as peças zeradas que não devem entrar na próxima compra. Isso não apaga a peça do estoque.</p>
+      <table><thead><tr><th>Código</th><th>QTD</th><th>Peça</th><th>Valor</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="tabelaEstoque"></tbody></table>
+      <div style="margin-top:18px;border-top:1px solid #ddd;padding-top:12px;">
+        <button type="button" class="btn-gray" onclick="alternarPecasOcultas()">👁️‍🗨️ Peças ocultas <span id="pecasOcultasCount">0</span></button>
+        <div id="pecasOcultasPainel" class="hidden" style="margin-top:10px;">
+          <p class="small">Estas peças continuam cadastradas, mas ficam fora da lista de zeradas. Você pode restaurá-las quando quiser.</p>
+          <div id="pecasOcultasLista"></div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section id="relatoriosCompra" class="hidden">
@@ -706,6 +745,47 @@
     <div class="card">
       <h2>Área do desenvolvedor</h2>
       <p class="small">Funções exclusivas do usuário Guilherme em modo desenvolvedor.</p>
+
+      <div class="card" id="devInventarioAcesso" style="margin-top:12px;">
+        <h3>📦 Inventário completo</h3>
+        <p class="small">Confira o estoque inteiro em uma lista organizada por marca e descrição em ordem crescente. Edite várias peças e salve tudo de uma vez.</p>
+        <button type="button" class="btn-blue" onclick="abrirInventarioEmLoteDev()">Abrir inventário</button>
+      </div>
+      <div id="devInventarioPainel" class="card hidden" style="margin-top:12px;">
+        <div class="inv-head">
+          <div>
+            <h2>📦 Inventário completo</h2>
+            <p class="small">As edições ficam pendentes nesta tela até você pressionar “Salvar todas as alterações”.</p>
+          </div>
+          <button type="button" class="btn-gray" onclick="fecharInventarioEmLoteDev()">← Voltar ao desenvolvedor</button>
+        </div>
+        <div class="inv-stats">
+          <div class="stat"><span>Peças cadastradas</span><strong id="invLoteItens">0</strong></div>
+          <div class="stat"><span>Unidades em estoque</span><strong id="invLoteUnidades">0</strong></div>
+          <div class="stat"><span>Valor total do estoque</span><strong id="invLoteValor">R$ 0,00</strong></div>
+          <div class="stat"><span>Alterações pendentes</span><strong id="invLotePendentes">0</strong></div>
+        </div>
+        <div class="inv-tools">
+          <input id="invLoteBusca" placeholder="Buscar código, descrição ou marca..." oninput="renderizarInventarioEmLoteDev()">
+          <select id="invLoteMarca" onchange="renderizarInventarioEmLoteDev()"><option value="">Todas as marcas</option></select>
+          <select id="invLoteOrdem" onchange="renderizarInventarioEmLoteDev()">
+            <option value="marca">Marca + descrição A → Z</option>
+            <option value="descricao">Descrição A → Z</option>
+            <option value="descricaoDesc">Descrição Z → A</option>
+            <option value="codigo">Código crescente</option>
+            <option value="qtd">Quantidade: menor → maior</option>
+          </select>
+        </div>
+        <div class="inv-actions">
+          <button type="button" class="btn-gray" onclick="renderizarInventarioEmLoteDev()">↕ Reorganizar lista</button>
+          <button type="button" class="btn-gray" onclick="recarregarInventarioEmLoteDev()">↻ Recarregar do banco</button>
+          <button type="button" class="btn-blue" onclick="exportarInventarioEmLoteDev()">⬇️ Exportar CSV</button>
+          <button type="button" class="btn-green" id="invLoteSalvar" onclick="salvarInventarioEmLoteDev()">💾 Salvar todas as alterações</button>
+        </div>
+        <p class="small" id="invLoteAviso" aria-live="polite">Nenhuma alteração pendente.</p>
+        <div id="invLoteLista"></div>
+      </div>
+
       <button class="btn-red" onclick="zerarTodoEstoque()">Zerar todo o estoque</button>
     </div>
 
@@ -977,6 +1057,7 @@ async function carregarTudo() {
     setConexao(false);
     console.error(err);
   }
+  if (typeof inventarioLoteOriginal !== "undefined" && !inventarioLoteEdicoes.size) inventarioLoteOriginal = new Map(estoque.map(p=>[String(p.codigo),{peca:p.peca,valor:Number(p.valor||0),qtd:Number(p.qtd||0)}]));
 }
 
 function atualizarTelaAtual() {
@@ -1972,10 +2053,22 @@ function renderizarEstoque(somenteZeradas = false) {
   const tbody=document.getElementById("tabelaEstoque");
   if (!tbody) return;
   tbody.innerHTML="";
+  const ocultas = codigosPecasZeradasOcultas();
   estoque
     .filter(i => !somenteZeradas || Number(i.qtd||0) <= 0)
-    .filter(i=>i.codigo.toLowerCase().includes(termo)||i.peca.toLowerCase().includes(termo))
-    .forEach(item=>{ const tr=document.createElement("tr"); tr.className=classeStatus(item.situacao); tr.innerHTML=`<td data-label="Código">${item.codigo}</td><td data-label="QTD">${item.qtd}</td><td data-label="Peça">${item.peca}</td><td data-label="Valor">${dinheiro(item.valor)}</td><td data-label="Situação">${item.situacao}</td><td data-label="Ação" class="actions"><button onclick="abrirModalBaixa('${item.codigo}')">Baixar</button><button class="btn-green" onclick="abrirModalReposicao('${item.codigo}')">Repor</button><button class="btn-gray" onclick="abrirModalEditarPeca('${item.codigo}')">Alterar</button></td>`; tbody.appendChild(tr); });
+    .filter(i => !somenteZeradas || !ocultas.has(String(i.codigo)))
+    .filter(i=>String(i.codigo).toLowerCase().includes(termo)||String(i.peca||"").toLowerCase().includes(termo))
+    .sort((a,b)=>String(a.peca||"").localeCompare(String(b.peca||""),"pt-BR",{numeric:true,sensitivity:"base"}))
+    .forEach(item=>{
+      const tr=document.createElement("tr");
+      tr.className=classeStatus(item.situacao);
+      const botaoOcultar = somenteZeradas
+        ? `<button class="btn-gray" title="Tirar da lista de peças zeradas" aria-label="Ocultar ${String(item.peca).replace(/"/g,"&quot;")}" onclick="ocultarPecaZerada('${String(item.codigo).replace(/'/g,"\\'")}')">🚫</button>`
+        : "";
+      tr.innerHTML=`<td data-label="Código">${item.codigo}</td><td data-label="QTD">${item.qtd}</td><td data-label="Peça">${item.peca}</td><td data-label="Valor">${dinheiro(item.valor)}</td><td data-label="Situação">${item.situacao}</td><td data-label="Ação" class="actions">${botaoOcultar}<button onclick="abrirModalBaixa('${item.codigo}')">Baixar</button><button class="btn-green" onclick="abrirModalReposicao('${item.codigo}')">Repor</button><button class="btn-gray" onclick="abrirModalEditarPeca('${item.codigo}')">Alterar</button></td>`;
+      tbody.appendChild(tr);
+    });
+  if (somenteZeradas) renderizarPecasZeradasOcultas();
 }
 
 function extrairOS(observacao) {
@@ -2309,6 +2402,284 @@ async function zerarTodoEstoque() {
 
 iniciarLogin();
 carregarTudo();
+
+// ===== Inventário DEV em lote =====
+let inventarioLoteOriginal = new Map();
+let inventarioLoteEdicoes = new Map();
+let inventarioLoteEmSalvamento = false;
+
+function exigirDevInventario() {
+  return typeof exigirDev === "function" ? exigirDev() : !!(usuarioAtual && usuarioAtual.dev);
+}
+function marcaInventarioLote(peca) {
+  const nome = String(peca || "").trim().replace(/\s+/g, " ");
+  const tokens = nome.split(" ");
+  // Descrições no padrão FRONTAL SAM A03 S/A XP agrupam pela marca SAM.
+  // Para nomes sem marca evidente, usa o primeiro termo para manter grupos previsíveis.
+  if (tokens.length >= 3 && /^(FRONTAL|BATERIA|PLAQUETA|TAMPA|DISPLAY|TELA)$/i.test(tokens[0])) return tokens[1].toLocaleUpperCase("pt-BR");
+  return (tokens.length > 1 ? tokens[1] : tokens[0] || "SEM MARCA").toLocaleUpperCase("pt-BR");
+}
+function invTextoOrdenavel(v) {
+  return String(v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+}
+function invDinheiro(v) {
+  return Number(v || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function invEscape(v) {
+  return String(v ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function abrirInventarioEmLoteDev() {
+  if (!exigirDevInventario()) return;
+  const painel = document.getElementById("devInventarioPainel");
+  const acesso = document.getElementById("devInventarioAcesso");
+  if (!painel || !acesso) return;
+
+  // O painel fica dentro do mesmo cartão da área DEV. Esconder os filhos
+  // diretos da seção ocultava também o cartão-pai e deixava a tela branca.
+  acesso.dataset.invPrevDisplay = acesso.style.display || "";
+  acesso.style.display = "none";
+  const botoesDev = [...document.querySelectorAll('#desenvolvedor button')];
+  const botaoZerar = botoesDev.find(b => (b.getAttribute('onclick') || '').includes('zerarTodoEstoque'));
+  if (botaoZerar) {
+    botaoZerar.dataset.invPrevDisplay = botaoZerar.style.display || "";
+    botaoZerar.style.display = "none";
+  }
+
+  painel.classList.remove("hidden");
+  painel.style.display = "block";
+  const busca = document.getElementById("invLoteBusca");
+  const marca = document.getElementById("invLoteMarca");
+  if (busca) busca.value = "";
+  if (marca) marca.value = "";
+  renderizarInventarioEmLoteDev();
+  painel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function fecharInventarioEmLoteDev() {
+  const painel = document.getElementById("devInventarioPainel");
+  const acesso = document.getElementById("devInventarioAcesso");
+  if (!painel || !acesso) return;
+  painel.classList.add("hidden");
+  painel.style.display = "";
+  acesso.style.display = acesso.dataset.invPrevDisplay ?? "";
+  delete acesso.dataset.invPrevDisplay;
+  const botoesDev = [...document.querySelectorAll('#desenvolvedor button')];
+  const botaoZerar = botoesDev.find(b => (b.getAttribute('onclick') || '').includes('zerarTodoEstoque'));
+  if (botaoZerar) {
+    botaoZerar.style.display = botaoZerar.dataset.invPrevDisplay ?? "";
+    delete botaoZerar.dataset.invPrevDisplay;
+  }
+}
+function dadosInventarioLote() {
+  return (Array.isArray(estoque) ? estoque : []).map(p => {
+    const edit = inventarioLoteEdicoes.get(String(p.codigo));
+    return {
+      ...p,
+      peca: edit ? edit.peca : p.peca,
+      valor: edit ? edit.valor : Number(p.valor || 0),
+      qtd: edit ? edit.qtd : Number(p.qtd || 0),
+      marcaInv: marcaInventarioLote(edit ? edit.peca : p.peca)
+    };
+  });
+}
+function renderizarInventarioEmLoteDev() {
+  if (!exigirDevInventario()) return;
+  const lista = document.getElementById("invLoteLista");
+  if (!lista) return;
+  const todos = dadosInventarioLote();
+  const busca = invTextoOrdenavel(document.getElementById("invLoteBusca")?.value).toLocaleLowerCase("pt-BR");
+  const marcaEscolhida = document.getElementById("invLoteMarca")?.value || "";
+  const ordem = document.getElementById("invLoteOrdem")?.value || "marca";
+  const marcaSel = document.getElementById("invLoteMarca");
+  const marcas = [...new Set(todos.map(p=>p.marcaInv))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true,sensitivity:"base"}));
+  const marcaAnt = marcaSel.value;
+  marcaSel.innerHTML = '<option value="">Todas as marcas</option>' + marcas.map(m=>`<option value="${invEscape(m)}">${invEscape(m)}</option>`).join("");
+  if (marcas.includes(marcaAnt)) marcaSel.value = marcaAnt;
+  let filtrados = todos.filter(p => (!marcaEscolhida || p.marcaInv === marcaEscolhida) &&
+    (!busca || `${p.codigo} ${p.peca} ${p.marcaInv}`.toLocaleLowerCase("pt-BR").includes(busca)));
+  filtrados.sort((a,b)=>{
+    const d = invTextoOrdenavel(a.peca).localeCompare(invTextoOrdenavel(b.peca),"pt-BR",{numeric:true,sensitivity:"base"});
+    const m = a.marcaInv.localeCompare(b.marcaInv,"pt-BR",{numeric:true,sensitivity:"base"});
+    if (ordem==="descricao") return d;
+    if (ordem==="descricaoDesc") return -d;
+    if (ordem==="codigo") return String(a.codigo).localeCompare(String(b.codigo),"pt-BR",{numeric:true});
+    if (ordem==="qtd") return a.qtd-b.qtd || d;
+    return m || d;
+  });
+  document.getElementById("invLoteItens").textContent = todos.length;
+  document.getElementById("invLoteUnidades").textContent = todos.reduce((s,p)=>s+Number(p.qtd||0),0);
+  document.getElementById("invLoteValor").textContent = invDinheiro(todos.reduce((s,p)=>s+Number(p.qtd||0)*Number(p.valor||0),0));
+  document.getElementById("invLotePendentes").textContent = inventarioLoteEdicoes.size;
+  document.getElementById("invLoteAviso").textContent = inventarioLoteEdicoes.size
+    ? `${inventarioLoteEdicoes.size} peça(s) alterada(s), ainda não salva(s).`
+    : "Nenhuma alteração pendente.";
+  if (!filtrados.length) { lista.innerHTML = '<p class="small">Nenhuma peça encontrada.</p>'; return; }
+
+  let grupoAtual = null, out = "";
+  filtrados.forEach(p=>{
+    if (ordem==="marca" && p.marcaInv !== grupoAtual) {
+      grupoAtual = p.marcaInv;
+      out += `<div class="inv-brand-title">${invEscape(grupoAtual)} <span class="small">— ${filtrados.filter(x=>x.marcaInv===grupoAtual).length} peça(s)</span></div>`;
+    }
+    const original = inventarioLoteOriginal.get(String(p.codigo)) || {peca:p.peca,valor:Number(p.valor||0),qtd:Number(p.qtd||0)};
+    const dirty = inventarioLoteEdicoes.has(String(p.codigo));
+    out += `<div class="inv-row ${dirty?'inv-dirty':''}" data-inv-codigo="${invEscape(p.codigo)}">
+      <div class="inv-code-cell"><div class="inv-code">${invEscape(p.codigo)}</div>${dirty?'<div class="inv-dirty-badge">ALTERADO</div>':''}</div>
+      <div class="inv-desc-cell"><label>Descrição / peça</label><input class="inv-desc" data-inv-field="peca" value="${invEscape(p.peca)}" onchange="marcarEdicaoInventarioDev('${invEscape(p.codigo)}')"></div>
+      <div><label>Valor (R$)</label><input type="number" min="0" step="0.01" data-inv-field="valor" value="${Number(p.valor||0)}" onchange="marcarEdicaoInventarioDev('${invEscape(p.codigo)}')"></div>
+      <div><label>Quantidade</label><input type="number" min="0" step="1" data-inv-field="qtd" value="${Number(p.qtd||0)}" onchange="marcarEdicaoInventarioDev('${invEscape(p.codigo)}')"></div>
+    </div>`;
+  });
+  lista.innerHTML = out;
+}
+function marcarEdicaoInventarioDev(codigo) {
+  const row = [...document.querySelectorAll(".inv-row")].find(el=>el.dataset.invCodigo===String(codigo));
+  const original = inventarioLoteOriginal.get(String(codigo));
+  const item = estoque.find(p=>String(p.codigo)===String(codigo));
+  if (!row || !item || !original) return;
+  const peca = row.querySelector('[data-inv-field="peca"]').value.trim();
+  const valorRaw = row.querySelector('[data-inv-field="valor"]').value;
+  const qtdRaw = row.querySelector('[data-inv-field="qtd"]').value;
+  const valor = Number(valorRaw), qtd = Number(qtdRaw);
+  const valido = !!peca && valorRaw!=="" && Number.isFinite(valor) && valor>=0 &&
+    qtdRaw!=="" && Number.isInteger(qtd) && qtd>=0;
+  if (!valido) {
+    row.classList.add("inv-dirty");
+    document.getElementById("invLoteAviso").textContent = "Há campo inválido. Descrição obrigatória, valor ≥ 0 e quantidade inteira ≥ 0.";
+    return;
+  }
+  if (peca===original.peca && valor===original.valor && qtd===original.qtd) inventarioLoteEdicoes.delete(String(codigo));
+  else inventarioLoteEdicoes.set(String(codigo),{peca,valor,qtd});
+  const dirty = inventarioLoteEdicoes.has(String(codigo));
+  row.classList.toggle("inv-dirty",dirty);
+  let badge = row.querySelector(".inv-dirty-badge");
+  if (dirty && !badge) {
+    badge=document.createElement("div"); badge.className="inv-dirty-badge"; badge.textContent="ALTERADO";
+    row.querySelector(".inv-code-cell").appendChild(badge);
+  } else if (!dirty && badge) badge.remove();
+  document.getElementById("invLotePendentes").textContent = inventarioLoteEdicoes.size;
+  document.getElementById("invLoteAviso").textContent = inventarioLoteEdicoes.size
+    ? `${inventarioLoteEdicoes.size} peça(s) alterada(s), ainda não salva(s). Se mudar descrição/marca, use “Reorganizar lista” para reagrupar.`
+    : "Nenhuma alteração pendente.";
+}
+
+async function salvarInventarioEmLoteDev() {
+  if (!exigirDevInventario() || inventarioLoteEmSalvamento) return;
+  if (!inventarioLoteEdicoes.size) return alert("Não há alterações para salvar.");
+  const edits = [...inventarioLoteEdicoes.entries()];
+  const invalid = edits.find(([codigo,e])=>!e.peca.trim() || !Number.isFinite(e.valor) || e.valor<0 || !Number.isInteger(e.qtd) || e.qtd<0);
+  if (invalid) return alert(`Confira a peça ${invalid[0]}: descrição obrigatória, valor não negativo e quantidade inteira não negativa.`);
+  const resumo = edits.map(([codigo,e])=>`${codigo}: ${e.peca} | ${invDinheiro(e.valor)} | qtd. ${e.qtd}`).join("\n");
+  if (!confirm(`Salvar ${edits.length} peça(s) alterada(s) no estoque?\n\n${resumo.slice(0,1800)}${resumo.length>1800?"\n…":""}`)) return;
+  inventarioLoteEmSalvamento = true;
+  const btn = document.getElementById("invLoteSalvar");
+  btn.disabled = true; btn.textContent = "Salvando...";
+  const erros = [], salvos = [];
+  try {
+    for (const [codigo,e] of edits) {
+      const item = estoque.find(p=>String(p.codigo)===String(codigo));
+      if (!item) { erros.push(`${codigo}: peça não encontrada na lista local`); continue; }
+      const res = await sb.from("pecas").update({peca:e.peca.trim().toUpperCase(),valor:e.valor,qtd:e.qtd}).eq("codigo",item.codigo);
+      if (res.error) { erros.push(`${codigo}: ${res.error.message}`); continue; }
+      salvos.push({codigo,peca:e.peca.trim().toUpperCase(),valor:e.valor,qtd:e.qtd,anterior:{peca:item.peca,valor:Number(item.valor||0),qtd:Number(item.qtd||0)}});
+    }
+    if (salvos.length) {
+      // Try to log each stock adjustment through the existing movement function.
+      for (const s of salvos) {
+        try {
+          await inserirMovimentacao({
+            tipo:"INVENTARIO",acao:"AJUSTE INVENTÁRIO",codigo:s.codigo,peca:s.peca,
+            qtdMov:s.qtd-s.anterior.qtd,qtdAnterior:s.anterior.qtd,novaQtd:s.qtd,
+            valorUnit:s.valor,valorTotal:s.valor*s.qtd,
+            observacao:`Ajuste em lote DEV. Descrição anterior: ${s.anterior.peca}; valor anterior: ${s.anterior.valor}; quantidade anterior: ${s.anterior.qtd}.`
+          });
+        } catch(e) { console.warn("Não foi possível registrar movimento de inventário",e); }
+      }
+      await carregarTudo();
+      inventarioLoteEdicoes.clear();
+      inventarioLoteOriginal = new Map(estoque.map(p=>[String(p.codigo),{peca:p.peca,valor:Number(p.valor||0),qtd:Number(p.qtd||0)}]));
+    }
+    if (erros.length) alert(`Salvos: ${salvos.length}\nCom erro: ${erros.length}\n\n${erros.join("\n")}`);
+    else alert(`Inventário salvo! ${salvos.length} peça(s) atualizada(s).`);
+    renderizarInventarioEmLoteDev();
+  } catch(e) {
+    alert("Erro ao salvar o inventário: "+(e?.message || e));
+  } finally {
+    inventarioLoteEmSalvamento = false;
+    btn.disabled = false; btn.textContent = "💾 Salvar todas as alterações";
+  }
+}
+async function recarregarInventarioEmLoteDev() {
+  if (!exigirDevInventario()) return;
+  if (inventarioLoteEdicoes.size && !confirm("Há alterações não salvas. Descartar e recarregar os dados do banco?")) return;
+  inventarioLoteEdicoes.clear();
+  await carregarTudo();
+  inventarioLoteOriginal = new Map(estoque.map(p=>[String(p.codigo),{peca:p.peca,valor:Number(p.valor||0),qtd:Number(p.qtd||0)}]));
+  renderizarInventarioEmLoteDev();
+}
+function exportarInventarioEmLoteDev() {
+  if (!exigirDevInventario()) return;
+  const linhas=[["Código","Marca","Descrição","Quantidade","Valor unitário","Valor total"]];
+  [...estoque].sort((a,b)=>marcaInventarioLote(a.peca).localeCompare(marcaInventarioLote(b.peca),"pt-BR",{numeric:true})||
+    String(a.peca).localeCompare(String(b.peca),"pt-BR",{numeric:true,sensitivity:"base"}))
+    .forEach(p=>linhas.push([p.codigo,marcaInventarioLote(p.peca),p.peca,p.qtd,p.valor,(Number(p.qtd||0)*Number(p.valor||0)).toFixed(2)]));
+  const csv="\uFEFF"+linhas.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(";")).join("\r\n");
+  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
+  const a=document.createElement("a");a.href=url;a.download="inventario-estoque-dm.csv";a.click();URL.revokeObjectURL(url);
+}
+
+
+// Ocultar/restaurar peças zeradas sem apagar o cadastro.
+const CHAVE_PECAS_ZERADAS_OCULTAS = "estoqueDM_pecas_zeradas_ocultas_v1";
+function codigosPecasZeradasOcultas() {
+  try {
+    const dados = JSON.parse(localStorage.getItem(CHAVE_PECAS_ZERADAS_OCULTAS) || "[]");
+    return new Set(Array.isArray(dados) ? dados.map(String) : []);
+  } catch (_) { return new Set(); }
+}
+function salvarCodigosPecasZeradasOcultas(set) {
+  localStorage.setItem(CHAVE_PECAS_ZERADAS_OCULTAS, JSON.stringify([...set]));
+}
+function ocultarPecaZerada(codigo) {
+  const item = estoque.find(p => String(p.codigo) === String(codigo));
+  if (!item) return alert("Peça não encontrada.");
+  if (Number(item.qtd || 0) > 0) return alert("Só é possível ocultar peças com estoque zerado.");
+  const ocultas = codigosPecasZeradasOcultas();
+  ocultas.add(String(item.codigo));
+  salvarCodigosPecasZeradasOcultas(ocultas);
+  renderizarEstoque(true);
+  renderizarPecasZeradasOcultas();
+}
+function restaurarPecaZerada(codigo) {
+  const ocultas = codigosPecasZeradasOcultas();
+  ocultas.delete(String(codigo));
+  salvarCodigosPecasZeradasOcultas(ocultas);
+  renderizarEstoque(true);
+  renderizarPecasZeradasOcultas();
+}
+function alternarPecasOcultas() {
+  const painel = document.getElementById("pecasOcultasPainel");
+  if (!painel) return;
+  painel.classList.toggle("hidden");
+  renderizarPecasZeradasOcultas();
+}
+function renderizarPecasZeradasOcultas() {
+  const lista = document.getElementById("pecasOcultasLista");
+  if (!lista) return;
+  const ocultas = codigosPecasZeradasOcultas();
+  const itens = estoque.filter(p => ocultas.has(String(p.codigo)) && Number(p.qtd || 0) <= 0)
+    .sort((a,b)=>String(a.peca||"").localeCompare(String(b.peca||""),"pt-BR",{numeric:true,sensitivity:"base"}));
+  const count = document.getElementById("pecasOcultasCount");
+  if (count) count.textContent = itens.length;
+  if (!itens.length) {
+    lista.innerHTML = '<p class="small">Nenhuma peça zerada oculta.</p>';
+    return;
+  }
+  lista.innerHTML = itens.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px;border:1px solid #ddd;border-radius:8px;margin:6px 0;">
+    <div><strong>${String(p.peca||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}</strong><div class="small">Código: ${String(p.codigo)} · Qtd: ${Number(p.qtd||0)}</div></div>
+    <button type="button" class="btn-green" onclick="restaurarPecaZerada('${String(p.codigo).replace(/'/g,"\\'")}')">↩️ Restaurar</button>
+  </div>`).join("");
+}
+
 </script>
 </body>
 </html>
